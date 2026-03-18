@@ -32,6 +32,8 @@ public class Window : GameWindow
     {
         base.OnLoad();
 
+        GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Line);
+
         GL.ClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 
         //Creates the VBO (Vertex Buffer Object)
@@ -52,23 +54,23 @@ public class Window : GameWindow
         GL.ShaderSource(vertexShader, GLSL.vertexShader);
         GL.CompileShader(vertexShader);
 
-        int framentShader = GL.CreateShader(ShaderType.FragmentShader);
-        GL.ShaderSource(framentShader, GLSL.fragmentShader);
-        GL.CompileShader(framentShader);
+        int fragmentShader = GL.CreateShader(ShaderType.FragmentShader);
+        GL.ShaderSource(fragmentShader, GLSL.fragmentShader);
+        GL.CompileShader(fragmentShader);
 
         // Creating a Program with the Shaders
         _shaderProgram = GL.CreateProgram();
 
         //Attaching the Shader to the Program;
         GL.AttachShader(_shaderProgram, vertexShader);
-        GL.AttachShader(_shaderProgram, framentShader);
+        GL.AttachShader(_shaderProgram, fragmentShader);
 
         GL.LinkProgram(_shaderProgram);
 
         GL.DetachShader(_shaderProgram, vertexShader);
-        GL.DetachShader(_shaderProgram, framentShader);
+        GL.DetachShader(_shaderProgram, fragmentShader);
         GL.DeleteShader(vertexShader);
-        GL.DeleteShader(framentShader);
+        GL.DeleteShader(fragmentShader);
 
     }
 
