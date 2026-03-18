@@ -12,10 +12,10 @@ public class Window : GameWindow
         //Triangle 01
        -0.5f, -0.5f, 0.0f, // Botton-left   
         0.5f, -0.5f, 0.0f, // Botton-right 
-        0.0f,  0.5f, 0.0f  // Top-center
+        0.0f,  0.5f, 0.0f,  // Top-center
 
         // Triangle 02
-       -0.5f,  0.5f, 0.0f, // Botton-left   
+        0.5f,  0.5f, 0.0f, // Botton-left   
         0.5f,  0.5f, 0.0f, // Botton-right 
         0.0f, -0.5f, 0.0f  // Top-center
     };
