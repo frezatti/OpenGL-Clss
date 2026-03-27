@@ -2,52 +2,64 @@ using OpenTK.Graphics.OpenGL4;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.Desktop;
 using Graphics_engine.Shader;
+using OpenTK.Mathematics;
 
 namespace Graphics_engine;
 
 public class Window : GameWindow
 {
-    private readonly float[] _vertices =
-    {
-        //Triangle 01
-       -0.5f, -0.5f, 0.0f, // Botton-left   
-        0.5f, -0.5f, 0.0f, // Botton-right 
-        0.0f,  0.5f, 0.0f,  // Top-center
-
-        // Triangle 02
-        0.5f,  0.5f, 0.0f, // Botton-left   
-        0.5f,  0.5f, 0.0f, // Botton-right 
-        0.0f, -0.5f, 0.0f  // Top-center
-    };
-    private int _vbo;
-    private int _vao;
+    readonly private RenderItem[] _render_items;
+    private Dictionary<Mesh, GPUMesh> _gpu_mesh = new Dictionary<Mesh, GPUMesh>();
+    readonly private RenderItem ball;
     private int _shaderProgram;
 
     public Window(GameWindowSettings gameWindowSettings, NativeWindowSettings nativeWindowSettings)
         : base(gameWindowSettings, nativeWindowSettings)
     {
+        var loaded_Render_Items = new List<RenderItem>();
+
+        ball = new RenderItem();
+        ball.Mesh = MeshFactory.CreateCircle(60, 1.0f, 1.0f, 1.0f);
+        ball.Transfom.Scale = (0.2f, 0.2f, 1.0f);
+        ball.Rendering_Type = PrimitiveType.TriangleFan;
+        loaded_Render_Items.Add(ball);
+
+
+        _render_items = loaded_Render_Items.ToArray();
     }
 
     protected override void OnLoad()
     {
         base.OnLoad();
 
-        GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Line);
+        //        GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Line);
 
-        GL.ClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+        GL.ClearColor(0.12f, 0.12f, 0.14f, 0.3f);
+        var mesh_hash = _render_items.Select(item => item.Mesh).ToHashSet();
 
-        //Creates the VBO (Vertex Buffer Object)
-        GL.CreateBuffers(1, out _vbo);
-        GL.NamedBufferData(_vbo, _vertices.Length * sizeof(float), _vertices, BufferUsageHint.StaticDraw);
+        foreach (var item in mesh_hash)
+        {
+            var gpumesh = new GPUMesh();
+            GL.CreateBuffers(1, out int vbo);
+            gpumesh.VBO = vbo;
+            GL.NamedBufferData(gpumesh.VBO, item.Vertice_Data.Length * sizeof(float), item.Vertice_Data, BufferUsageHint.StaticDraw);
 
-        // Creates the VAO (Vertex Array Buffer)
-        GL.CreateVertexArrays(1, out _vao);
-        GL.VertexArrayVertexBuffer(_vao, 0, _vbo, IntPtr.Zero, 3 * sizeof(float));
+            // Creates the VAO (Vertex Array Buffer)
+            GL.CreateVertexArrays(1, out int vao);
+            gpumesh.VAO = vao;
+            GL.VertexArrayVertexBuffer(gpumesh.VAO, 0, gpumesh.VBO, IntPtr.Zero, 6 * sizeof(float));
 
-        // Shader Binding and Settings
-        GL.EnableVertexArrayAttrib(_vao, 0);
-        GL.VertexArrayAttribFormat(_vao, 0, 3, VertexAttribType.Float, false, 0);
-        GL.VertexArrayAttribBinding(_vao, 0, 0);
+            // Shader Binding and Settings. (Positions)
+            GL.EnableVertexArrayAttrib(gpumesh.VAO, 0);
+            GL.VertexArrayAttribFormat(gpumesh.VAO, 0, 3, VertexAttribType.Float, false, 0);
+            GL.VertexArrayAttribBinding(gpumesh.VAO, 0, 0);
+
+            // Shader Binding and Setting. (Color)
+            GL.EnableVertexArrayAttrib(gpumesh.VAO, 1);
+            GL.VertexArrayAttribFormat(gpumesh.VAO, 1, 3, VertexAttribType.Float, false, 3 * sizeof(float));
+            GL.VertexArrayAttribBinding(gpumesh.VAO, 1, 0);
+            _gpu_mesh.Add(item, gpumesh);
+        }
 
         // Vertex Shader and Frament Shader Compilation
         int vertexShader = GL.CreateShader(ShaderType.VertexShader);
@@ -82,18 +94,66 @@ public class Window : GameWindow
         {
             Close();
         }
+
+        if (KeyboardState.IsKeyDown(OpenTK.Windowing.GraphicsLibraryFramework.Keys.Right))
+        {
+            var vector = ball.Transfom.Position;
+            vector[0] += 0.001f;
+            if (vector[0] > 1.0f) vector[0] = 1.0f;
+            ball.Transfom.Position = vector;
+        }
+        if (KeyboardState.IsKeyDown(OpenTK.Windowing.GraphicsLibraryFramework.Keys.Left))
+        {
+            var vector = ball.Transfom.Position;
+            vector[0] -= 0.001f;
+            if (vector[0] < -1.0f) vector[0] = -1.0f;
+            ball.Transfom.Position = vector;
+        }
+        if (KeyboardState.IsKeyDown(OpenTK.Windowing.GraphicsLibraryFramework.Keys.Up))
+        {
+            var vector = ball.Transfom.Position;
+            vector[1] += 0.001f;
+            if (vector[1] > 1.0f) vector[1] = 1.0f;
+            ball.Transfom.Position = vector;
+        }
+        if (KeyboardState.IsKeyDown(OpenTK.Windowing.GraphicsLibraryFramework.Keys.Down))
+        {
+            var vector = ball.Transfom.Position;
+            vector[1] -= 0.001f;
+            if (vector[1] < -1.0f) vector[1] = -1.0f;
+            ball.Transfom.Position = vector;
+        }
     }
 
     protected override void OnRenderFrame(FrameEventArgs args)
     {
         base.OnRenderFrame(args);
-        GL.Clear(ClearBufferMask.ColorBufferBit);
 
+        GL.Clear(ClearBufferMask.ColorBufferBit);
         GL.UseProgram(_shaderProgram);
 
-        GL.BindVertexArray(_vao);
 
-        GL.DrawArrays(PrimitiveType.Triangles, 0, 6);
+        int transformLocation = GL.GetUniformLocation(_shaderProgram, "transform");
+
+
+        foreach (var item in _render_items)
+        {
+            if (!_gpu_mesh.TryGetValue(item.Mesh, out GPUMesh gpumesh) || gpumesh is null) continue;
+
+            // Shape
+            GL.BindVertexArray(gpumesh.VAO);
+
+            // Transform postion into a tranlastion.Vec3 rotation to Matrix4 rotation, and same for the scale
+            var translate = Matrix4.CreateTranslation(item.Transfom.Position);
+            var rotation = Matrix4.CreateRotationZ(item.Transfom.Rotation);
+            var scale = Matrix4.CreateScale(item.Transfom.Scale);
+
+            var final_matrix = scale * rotation * translate;
+
+            GL.UniformMatrix4(transformLocation, true, ref final_matrix);
+            GL.DrawArrays(item.Rendering_Type, 0, item.Mesh.Vertex_Count);
+        }
+
 
         SwapBuffers();
     }
@@ -102,9 +162,11 @@ public class Window : GameWindow
     {
         base.OnUnload();
 
-        GL.DeleteBuffer(_vbo);
-
-        GL.DeleteVertexArray(_vao);
+        foreach (var item in _gpu_mesh)
+        {
+            GL.DeleteBuffer(item.Value.VBO);
+            GL.DeleteVertexArray(item.Value.VAO);
+        }
 
         GL.DeleteProgram(_shaderProgram);
     }

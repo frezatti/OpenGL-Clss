@@ -1,0 +1,29 @@
+.
+├── Assets
+│   ├── shape_a.txt
+│   ├── shape_b.txt
+│   ├── shape_c.txt
+│   └── shape_d.txt
+├── graphics.slnx
+├── output.txt
+├── photos
+│   ├── screenshot-2026-03-30_10-30-51.png
+│   ├── screenshot-2026-03-30_10-38-29.png
+│   ├── screenshot-2026-03-30_10-39-31.png
+│   └── screenshot-2026-03-30_10-39-58.png
+├── readme.md
+├── src
+│   └── Graphics_engine
+│       ├── GLSL.cs
+│       ├── Graphics_engine.csproj
+│       ├── Program.cs
+│       └── Renderer.cs
+└── tests
+    ├── exercise1.Tests
+    │   ├── exercise1.Tests.csproj
+    │   └── UnitTest1.cs
+    └── Graphics_engine.Tests
+        ├── Graphics_engine.Tests.csproj
+        └── UnitTest1.cs
+
+8 directories, 19 files
