@@ -18,17 +18,29 @@ public static class GLSL
                     vertexColor = aColor;
                 }";
 
-    public const string fragmentShader = @"
+    public static string fragmentShader = @"
                 #version 330 core
-                
-                in vec3 vertexColor;
 
+                in vec3 vertexColor;
                 out vec4 FragColor;
+
+                uniform vec4 baseColor;
+                uniform int colorMode;
 
                 void main()
                 {
-                    FragColor = vec4(vertexColor,1.0f); 
+                    vec3 finalColor = vertexColor;
 
+                    if (colorMode == 1)
+                    {
+                        finalColor = baseColor.rgb;
+                    }
+                    else if (colorMode == 2)
+                    {
+                        finalColor = vertexColor * baseColor.rgb;
+                    }
+
+                    FragColor = vec4(finalColor, baseColor.a);
                 }
-                        ";
+                ";
 }

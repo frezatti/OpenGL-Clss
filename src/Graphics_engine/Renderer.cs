@@ -2,7 +2,11 @@ using OpenTK.Graphics.OpenGL4;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.Desktop;
 using Graphics_engine.Shader;
+using System.Numerics;
+using OpenTK.Windowing.GraphicsLibraryFramework;
+using OpenTK.Platform.Windows;
 using OpenTK.Mathematics;
+using NumVector4 = System.Numerics.Vector4;
 
 namespace Graphics_engine;
 
@@ -10,31 +14,35 @@ public class Window : GameWindow
 {
     readonly private RenderItem[] _render_items;
     private Dictionary<Mesh, GPUMesh> _gpu_mesh = new Dictionary<Mesh, GPUMesh>();
-    readonly private RenderItem ball;
+    private Dictionary<Mesh, Bounds2D> _bounds;
     private int _shaderProgram;
+    private int _transformLocation;
+    private int _baseColorLocation;
+    private int _colorModeLocation;
+    private int _current_color = 0;
+    NumVector4[] rainbowColors =
+    {
+    new NumVector4(1.00f, 0.00f, 0.00f, 1.00f), // Red
+    new NumVector4(1.00f, 0.50f, 0.00f, 1.00f), // Orange
+    new NumVector4(1.00f, 1.00f, 0.00f, 1.00f), // Yellow
+    new NumVector4(0.00f, 1.00f, 0.00f, 1.00f), // Green
+    new NumVector4(0.00f, 0.50f, 1.00f, 1.00f), // Light blue / cyan-blue
+    new NumVector4(0.00f, 0.00f, 1.00f, 1.00f), // Blue
+    new NumVector4(0.50f, 0.00f, 1.00f, 1.00f), // Purple / violet
+};
+
 
     public Window(GameWindowSettings gameWindowSettings, NativeWindowSettings nativeWindowSettings)
         : base(gameWindowSettings, nativeWindowSettings)
     {
-        var loaded_Render_Items = new List<RenderItem>();
-
-        ball = new RenderItem();
-        ball.Mesh = MeshFactory.CreateCircle(60, 1.0f, 1.0f, 1.0f);
-        ball.Transfom.Scale = (0.2f, 0.2f, 1.0f);
-        ball.Rendering_Type = PrimitiveType.TriangleFan;
-        loaded_Render_Items.Add(ball);
-
-
-        _render_items = loaded_Render_Items.ToArray();
+        (_render_items, _bounds) = MeshLoader.LoadExercise2();
     }
 
     protected override void OnLoad()
     {
         base.OnLoad();
 
-        //        GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Line);
-
-        GL.ClearColor(0.12f, 0.12f, 0.14f, 0.3f);
+        GL.ClearColor(0.85f, 0.85f, 0.88f, 1.0f);
         var mesh_hash = _render_items.Select(item => item.Mesh).ToHashSet();
 
         foreach (var item in mesh_hash)
@@ -79,6 +87,10 @@ public class Window : GameWindow
 
         GL.LinkProgram(_shaderProgram);
 
+        _transformLocation = GL.GetUniformLocation(_shaderProgram, "transform");
+        _baseColorLocation = GL.GetUniformLocation(_shaderProgram, "baseColor");
+        _colorModeLocation = GL.GetUniformLocation(_shaderProgram, "colorMode");
+
         GL.DetachShader(_shaderProgram, vertexShader);
         GL.DetachShader(_shaderProgram, fragmentShader);
         GL.DeleteShader(vertexShader);
@@ -95,33 +107,22 @@ public class Window : GameWindow
             Close();
         }
 
-        if (KeyboardState.IsKeyDown(OpenTK.Windowing.GraphicsLibraryFramework.Keys.Right))
+        if (MouseState.IsButtonPressed(MouseButton.Left))
         {
-            var vector = ball.Transfom.Position;
-            vector[0] += 0.001f;
-            if (vector[0] > 1.0f) vector[0] = 1.0f;
-            ball.Transfom.Position = vector;
-        }
-        if (KeyboardState.IsKeyDown(OpenTK.Windowing.GraphicsLibraryFramework.Keys.Left))
-        {
-            var vector = ball.Transfom.Position;
-            vector[0] -= 0.001f;
-            if (vector[0] < -1.0f) vector[0] = -1.0f;
-            ball.Transfom.Position = vector;
-        }
-        if (KeyboardState.IsKeyDown(OpenTK.Windowing.GraphicsLibraryFramework.Keys.Up))
-        {
-            var vector = ball.Transfom.Position;
-            vector[1] += 0.001f;
-            if (vector[1] > 1.0f) vector[1] = 1.0f;
-            ball.Transfom.Position = vector;
-        }
-        if (KeyboardState.IsKeyDown(OpenTK.Windowing.GraphicsLibraryFramework.Keys.Down))
-        {
-            var vector = ball.Transfom.Position;
-            vector[1] -= 0.001f;
-            if (vector[1] < -1.0f) vector[1] = -1.0f;
-            ball.Transfom.Position = vector;
+            foreach (var item in _render_items)
+            {
+                var x_normalized = (MouseState.X / (float)ClientSize.X) * 2 - 1;
+                var y_normalized = 1 - (MouseState.Y / (float)ClientSize.Y) * 2;
+                var localX = (x_normalized - item.Transfom.Position.X) / item.Transfom.Scale.X;
+                var localY = (y_normalized - item.Transfom.Position.Y) / item.Transfom.Scale.Y;
+                _bounds.TryGetValue(item.Mesh, out var bound);
+                if (localX <= bound.MaxX && localX >= bound.MinX && localY <= bound.MaxY && localY >= bound.MinY)
+                {
+                    var material = item.Material;
+                    material.BaseColor = rainbowColors[_current_color];
+                    _current_color = (_current_color + 1) % rainbowColors.Length;
+                }
+            }
         }
     }
 
@@ -133,24 +134,31 @@ public class Window : GameWindow
         GL.UseProgram(_shaderProgram);
 
 
-        int transformLocation = GL.GetUniformLocation(_shaderProgram, "transform");
-
-
         foreach (var item in _render_items)
         {
-            if (!_gpu_mesh.TryGetValue(item.Mesh, out GPUMesh gpumesh) || gpumesh is null) continue;
+            if (!_gpu_mesh.TryGetValue(item.Mesh, out GPUMesh gpumesh) || gpumesh is null)
+                continue;
 
-            // Shape
             GL.BindVertexArray(gpumesh.VAO);
 
-            // Transform postion into a tranlastion.Vec3 rotation to Matrix4 rotation, and same for the scale
             var translate = Matrix4.CreateTranslation(item.Transfom.Position);
             var rotation = Matrix4.CreateRotationZ(item.Transfom.Rotation);
             var scale = Matrix4.CreateScale(item.Transfom.Scale);
 
             var final_matrix = scale * rotation * translate;
 
-            GL.UniformMatrix4(transformLocation, true, ref final_matrix);
+            GL.UniformMatrix4(_transformLocation, true, ref final_matrix);
+
+            GL.Uniform4(
+                _baseColorLocation,
+                item.Material.BaseColor.X,
+                item.Material.BaseColor.Y,
+                item.Material.BaseColor.Z,
+                item.Material.BaseColor.W
+            );
+
+            GL.Uniform1(_colorModeLocation, (int)item.Material.ColorMode);
+
             GL.DrawArrays(item.Rendering_Type, 0, item.Mesh.Vertex_Count);
         }
 

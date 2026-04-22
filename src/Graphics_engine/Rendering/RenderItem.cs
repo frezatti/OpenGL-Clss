@@ -6,4 +6,5 @@ public class RenderItem
     public Mesh Mesh { get; set; } = new Mesh();
     public Transform Transfom { get; set; } = new Transform();
     public PrimitiveType Rendering_Type { get; set; }
+    public Material Material { get; set; } = Material.Default();
 }

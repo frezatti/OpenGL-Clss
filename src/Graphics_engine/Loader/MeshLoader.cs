@@ -1,5 +1,7 @@
 using System.Globalization;
 using Graphics_engine;
+using OpenTK.Graphics.OpenGL4;
+using OpenTK.Mathematics;
 
 public class MeshLoader
 {
@@ -69,4 +71,117 @@ public class MeshLoader
         return true;
 
     }
+
+    public static RenderItem[] LoadExercise1()
+    {
+        var loadedRenderItems = new List<RenderItem>();
+
+        void AddFromFile(string path, PrimitiveType primitiveType, Vector3 position, Vector3 scale)
+        {
+            if (!MeshLoader.TryLoadFromFile(path, out Mesh mesh, out LoaderError error))
+            {
+                throw new Exception($"Failed to load mesh: {path}\n{error.Message}");
+            }
+
+            var item = new RenderItem();
+            item.Mesh = mesh;
+            item.Rendering_Type = primitiveType;
+            item.Transfom.Position = position;
+            item.Transfom.Scale = scale;
+            item.Transfom.Rotation = 0.0f;
+
+            loadedRenderItems.Add(item);
+        }
+
+        var leftPosition = new Vector3(-0.55f, 0.00f, 0.0f);
+        var rightPosition = new Vector3(0.55f, 0.00f, 0.0f);
+        var birdScale = new Vector3(0.42f, 0.42f, 1.0f);
+
+        // Filled bird (left)
+        AddFromFile("Assets/bird_leg1_fill.txt", PrimitiveType.Triangles, leftPosition, birdScale);
+        AddFromFile("Assets/bird_leg2_fill.txt", PrimitiveType.Triangles, leftPosition, birdScale);
+        AddFromFile("Assets/bird_tail_fill.txt", PrimitiveType.Triangles, leftPosition, birdScale);
+        AddFromFile("Assets/bird_body_fill.txt", PrimitiveType.TriangleFan, leftPosition, birdScale);
+        AddFromFile("Assets/bird_head_fill.txt", PrimitiveType.TriangleFan, leftPosition, birdScale);
+        AddFromFile("Assets/bird_wing_fill.txt", PrimitiveType.Triangles, leftPosition, birdScale);
+        AddFromFile("Assets/bird_beak_fill.txt", PrimitiveType.Triangles, leftPosition, birdScale);
+        AddFromFile("Assets/bird_eye_fill.txt", PrimitiveType.TriangleFan, leftPosition, birdScale);
+
+        // Outline bird (right)
+        AddFromFile("Assets/bird_leg1_outline.txt", PrimitiveType.LineStrip, rightPosition, birdScale);
+        AddFromFile("Assets/bird_leg2_outline.txt", PrimitiveType.LineStrip, rightPosition, birdScale);
+        AddFromFile("Assets/bird_tail_outline.txt", PrimitiveType.LineLoop, rightPosition, birdScale);
+        AddFromFile("Assets/bird_body_outline.txt", PrimitiveType.LineLoop, rightPosition, birdScale);
+        AddFromFile("Assets/bird_head_outline.txt", PrimitiveType.LineLoop, rightPosition, birdScale);
+        AddFromFile("Assets/bird_wing_outline.txt", PrimitiveType.LineLoop, rightPosition, birdScale);
+        AddFromFile("Assets/bird_beak_outline.txt", PrimitiveType.LineLoop, rightPosition, birdScale);
+        AddFromFile("Assets/bird_eye_outline.txt", PrimitiveType.LineLoop, rightPosition, birdScale);
+
+        return loadedRenderItems.ToArray();
+    }
+
+    public static (RenderItem[], Dictionary<Mesh, Bounds2D>) LoadExercise2()
+    {
+        var loadedRenderItems = new List<RenderItem>();
+        var bounds = new Dictionary<Mesh, Bounds2D>();
+
+        void AddFromFile(string path, PrimitiveType primitiveType, Vector3 position, Vector3 scale)
+        {
+            if (!MeshLoader.TryLoadFromFile(path, out Mesh mesh, out LoaderError error))
+            {
+                throw new Exception($"Failed to load mesh: {path}\n{error.Message}");
+            }
+
+            var item = new RenderItem();
+            item.Mesh = mesh;
+            item.Rendering_Type = primitiveType;
+            item.Transfom.Position = position;
+            item.Transfom.Scale = scale;
+            item.Transfom.Rotation = 0.0f;
+            var material = item.Material;
+            material.ColorMode = ColorMode.SolidColor;
+            item.Material = material;
+
+
+            var xmax = mesh.Vertice_Data[0];
+            var xmin = xmax;
+            var ymax = mesh.Vertice_Data[1];
+            var ymin = ymax;
+
+            for (var i = 0; i < mesh.Vertice_Data.Length; i += 6)
+            {
+
+                if (mesh.Vertice_Data[i] > xmax)
+                {
+                    xmax = mesh.Vertice_Data[i];
+                }
+                if (mesh.Vertice_Data[i] < xmin)
+                {
+                    xmin = mesh.Vertice_Data[i];
+                }
+
+                if (mesh.Vertice_Data[i + 1] > ymax)
+                {
+                    ymax = mesh.Vertice_Data[i + 1];
+                }
+                if (mesh.Vertice_Data[i + 1] < ymin)
+                {
+                    ymin = mesh.Vertice_Data[i + 1];
+                }
+            }
+            var bound = new Bounds2D() { MaxX = xmax, MinX = xmin, MaxY = ymax, MinY = ymin };
+            bounds.Add(mesh, bound);
+            loadedRenderItems.Add(item);
+        }
+
+        var scale = new Vector3(0.42f, 0.42f, 1.0f);
+
+        // Filled bird (left)
+        AddFromFile("Assets/bird_body_fill.txt", PrimitiveType.TriangleFan, (-0.3f, 0.0f, 0.0f), scale);
+        AddFromFile("Assets/bird_head_fill.txt", PrimitiveType.TriangleFan, (0.0f, 0.0f, 0.0f), scale);
+        AddFromFile("Assets/bird_wing_fill.txt", PrimitiveType.Triangles, (0.3f, 0.0f, 0.0f), scale);
+
+        return (loadedRenderItems.ToArray(), bounds);
+    }
+
 }
