@@ -120,6 +120,8 @@ public class Window : GameWindow
                 {
                     var material = item.Material;
                     material.BaseColor = rainbowColors[_current_color];
+                    item.Material = material;
+
                     _current_color = (_current_color + 1) % rainbowColors.Length;
                 }
             }
