@@ -1,7 +1,7 @@
 using System.Globalization;
 using Graphics_engine;
 using OpenTK.Graphics.OpenGL4;
-using OpenTK.Mathematics;
+using System.Numerics;
 
 public class MeshLoader
 {
@@ -72,114 +72,136 @@ public class MeshLoader
 
     }
 
-    public static RenderItem[] LoadExercise1()
-    {
-        var loadedRenderItems = new List<RenderItem>();
 
-        void AddFromFile(string path, PrimitiveType primitiveType, Vector3 position, Vector3 scale)
-        {
-            if (!MeshLoader.TryLoadFromFile(path, out Mesh mesh, out LoaderError error))
-            {
-                throw new Exception($"Failed to load mesh: {path}\n{error.Message}");
-            }
-
-            var item = new RenderItem();
-            item.Mesh = mesh;
-            item.Rendering_Type = primitiveType;
-            item.Transfom.Position = position;
-            item.Transfom.Scale = scale;
-            item.Transfom.Rotation = 0.0f;
-
-            loadedRenderItems.Add(item);
-        }
-
-        var leftPosition = new Vector3(-0.55f, 0.00f, 0.0f);
-        var rightPosition = new Vector3(0.55f, 0.00f, 0.0f);
-        var birdScale = new Vector3(0.42f, 0.42f, 1.0f);
-
-        // Filled bird (left)
-        AddFromFile("Assets/bird_leg1_fill.txt", PrimitiveType.Triangles, leftPosition, birdScale);
-        AddFromFile("Assets/bird_leg2_fill.txt", PrimitiveType.Triangles, leftPosition, birdScale);
-        AddFromFile("Assets/bird_tail_fill.txt", PrimitiveType.Triangles, leftPosition, birdScale);
-        AddFromFile("Assets/bird_body_fill.txt", PrimitiveType.TriangleFan, leftPosition, birdScale);
-        AddFromFile("Assets/bird_head_fill.txt", PrimitiveType.TriangleFan, leftPosition, birdScale);
-        AddFromFile("Assets/bird_wing_fill.txt", PrimitiveType.Triangles, leftPosition, birdScale);
-        AddFromFile("Assets/bird_beak_fill.txt", PrimitiveType.Triangles, leftPosition, birdScale);
-        AddFromFile("Assets/bird_eye_fill.txt", PrimitiveType.TriangleFan, leftPosition, birdScale);
-
-        // Outline bird (right)
-        AddFromFile("Assets/bird_leg1_outline.txt", PrimitiveType.LineStrip, rightPosition, birdScale);
-        AddFromFile("Assets/bird_leg2_outline.txt", PrimitiveType.LineStrip, rightPosition, birdScale);
-        AddFromFile("Assets/bird_tail_outline.txt", PrimitiveType.LineLoop, rightPosition, birdScale);
-        AddFromFile("Assets/bird_body_outline.txt", PrimitiveType.LineLoop, rightPosition, birdScale);
-        AddFromFile("Assets/bird_head_outline.txt", PrimitiveType.LineLoop, rightPosition, birdScale);
-        AddFromFile("Assets/bird_wing_outline.txt", PrimitiveType.LineLoop, rightPosition, birdScale);
-        AddFromFile("Assets/bird_beak_outline.txt", PrimitiveType.LineLoop, rightPosition, birdScale);
-        AddFromFile("Assets/bird_eye_outline.txt", PrimitiveType.LineLoop, rightPosition, birdScale);
-
-        return loadedRenderItems.ToArray();
-    }
-
-    public static (RenderItem[], Dictionary<Mesh, Bounds2D>) LoadExercise2()
+    public static (RenderItem[], Dictionary<Mesh, Bounds2D>) LoadExample()
     {
         var loadedRenderItems = new List<RenderItem>();
         var bounds = new Dictionary<Mesh, Bounds2D>();
 
-        void AddFromFile(string path, PrimitiveType primitiveType, Vector3 position, Vector3 scale)
+        void AddFromMesh(
+            Mesh mesh,
+            PrimitiveType primitiveType,
+            Vector3 position,
+            Vector3 scale,
+            float rotation = 0.0f,
+            Vector4? baseColor = null,
+            ColorMode colorMode = ColorMode.SolidColor)
         {
-            if (!MeshLoader.TryLoadFromFile(path, out Mesh mesh, out LoaderError error))
-            {
-                throw new Exception($"Failed to load mesh: {path}\n{error.Message}");
-            }
-
             var item = new RenderItem();
+
             item.Mesh = mesh;
             item.Rendering_Type = primitiveType;
             item.Transfom.Position = position;
             item.Transfom.Scale = scale;
-            item.Transfom.Rotation = 0.0f;
+            item.Transfom.Rotation = rotation;
+
             var material = item.Material;
-            material.ColorMode = ColorMode.SolidColor;
+            material.ColorMode = colorMode;
+            material.BaseColor = baseColor ?? new Vector4(1.0f, 1.0f, 1.0f, 1.0f);
             item.Material = material;
 
-
-            var xmax = mesh.Vertice_Data[0];
-            var xmin = xmax;
-            var ymax = mesh.Vertice_Data[1];
-            var ymin = ymax;
-
-            for (var i = 0; i < mesh.Vertice_Data.Length; i += 6)
-            {
-
-                if (mesh.Vertice_Data[i] > xmax)
-                {
-                    xmax = mesh.Vertice_Data[i];
-                }
-                if (mesh.Vertice_Data[i] < xmin)
-                {
-                    xmin = mesh.Vertice_Data[i];
-                }
-
-                if (mesh.Vertice_Data[i + 1] > ymax)
-                {
-                    ymax = mesh.Vertice_Data[i + 1];
-                }
-                if (mesh.Vertice_Data[i + 1] < ymin)
-                {
-                    ymin = mesh.Vertice_Data[i + 1];
-                }
-            }
-            var bound = new Bounds2D() { MaxX = xmax, MinX = xmin, MaxY = ymax, MinY = ymin };
-            bounds.Add(mesh, bound);
             loadedRenderItems.Add(item);
         }
 
-        var scale = new Vector3(0.42f, 0.42f, 1.0f);
+        var white = new Vector4(1.0f, 1.0f, 1.0f, 1.0f);
+        var red = new Vector4(1.0f, 0.1f, 0.1f, 1.0f);
+        var yellow = new Vector4(1.0f, 0.85f, 0.1f, 1.0f);
 
-        // Filled bird (left)
-        AddFromFile("Assets/bird_body_fill.txt", PrimitiveType.TriangleFan, (-0.3f, 0.0f, 0.0f), scale);
-        AddFromFile("Assets/bird_head_fill.txt", PrimitiveType.TriangleFan, (0.0f, 0.0f, 0.0f), scale);
-        AddFromFile("Assets/bird_wing_fill.txt", PrimitiveType.Triangles, (0.3f, 0.0f, 0.0f), scale);
+        var white3 = new Vector3(1.0f, 1.0f, 1.0f);
+        var red3 = new Vector3(1.0f, 0.1f, 0.1f);
+        var yellow3 = new Vector3(1.0f, 0.85f, 0.1f);
+
+        // Optional grid
+        AddFromMesh(
+            MeshFactory.CreateGrid(),
+            PrimitiveType.Lines,
+            Vector3.Zero,
+            Vector3.One,
+            0.0f,
+            white,
+            ColorMode.VertexColor
+        );
+
+        // Main speedometer arc
+        AddFromMesh(
+            MeshFactory.CreateArc(0.75f, 200.0f, -20.0f, 64, white3),
+            PrimitiveType.LineStrip,
+            new Vector3(0.0f, -0.25f, 0.0f),
+            Vector3.One,
+            0.0f,
+            white
+        );
+
+        // Tick marks
+        AddFromMesh(
+            MeshFactory.CreateTickMarks(0.62f, 0.75f, 200.0f, -20.0f, 13, white3),
+            PrimitiveType.Lines,
+            new Vector3(0.0f, -0.25f, 0.0f),
+            Vector3.One,
+            0.0f,
+            white
+        );
+
+        // Red warning ticks on the right side
+        AddFromMesh(
+            MeshFactory.CreateTickMarks(0.58f, 0.75f, 20.0f, -20.0f, 4, red3),
+            PrimitiveType.Lines,
+            new Vector3(0.0f, -0.25f, 0.0f),
+            Vector3.One,
+            0.0f,
+            red
+        );
+
+        // Center circle
+        AddFromMesh(
+            MeshFactory.CreateCircle(32, 1.0f, 1.0f, 1.0f, 0.055f),
+            PrimitiveType.TriangleFan,
+            new Vector3(0.0f, -0.25f, 0.0f),
+            Vector3.One,
+            0.0f,
+            white
+        );
+
+        // Needle
+        // Important: keep this as item index 5 if your update logic depends on index.
+        AddFromMesh(
+            MeshFactory.CreateNeedle(0.055f, 0.55f, yellow3),
+            PrimitiveType.Triangles,
+            new Vector3(0.0f, -0.25f, 0.0f),
+            Vector3.One,
+            110.0f * MathF.PI / 180.0f,
+            yellow
+        );
+
+        // Left number
+        AddFromMesh(
+            MeshFactory.CreateSevenSegmentNumber("0", 0.12f, 0.22f, 0.025f, 0.03f, white3),
+            PrimitiveType.Triangles,
+            new Vector3(-0.63f, -0.52f, 0.0f),
+            Vector3.One,
+            0.0f,
+            white
+        );
+
+        // Middle number
+        AddFromMesh(
+            MeshFactory.CreateSevenSegmentNumber("60", 0.10f, 0.20f, 0.022f, 0.025f, white3),
+            PrimitiveType.Triangles,
+            new Vector3(0.0f, 0.35f, 0.0f),
+            Vector3.One,
+            0.0f,
+            white
+        );
+
+        // Right number
+        AddFromMesh(
+            MeshFactory.CreateSevenSegmentNumber("120", 0.09f, 0.18f, 0.020f, 0.022f, red3),
+            PrimitiveType.Triangles,
+            new Vector3(0.62f, -0.52f, 0.0f),
+            Vector3.One,
+            0.0f,
+            red
+        );
 
         return (loadedRenderItems.ToArray(), bounds);
     }

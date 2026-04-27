@@ -19,30 +19,46 @@ public class Window : GameWindow
     private int _transformLocation;
     private int _baseColorLocation;
     private int _colorModeLocation;
-    private int _current_color = 0;
-    NumVector4[] rainbowColors =
-    {
-    new NumVector4(1.00f, 0.00f, 0.00f, 1.00f), // Red
-    new NumVector4(1.00f, 0.50f, 0.00f, 1.00f), // Orange
-    new NumVector4(1.00f, 1.00f, 0.00f, 1.00f), // Yellow
-    new NumVector4(0.00f, 1.00f, 0.00f, 1.00f), // Green
-    new NumVector4(0.00f, 0.50f, 1.00f, 1.00f), // Light blue / cyan-blue
-    new NumVector4(0.00f, 0.00f, 1.00f, 1.00f), // Blue
-    new NumVector4(0.50f, 0.00f, 1.00f, 1.00f), // Purple / violet
-};
+    private const int NeedleIndex = 5;
+
+    private const float NeedleMinRotation = -110.0f * MathF.PI / 180.0f;
+    private const float NeedleMaxRotation = 110.0f * MathF.PI / 180.0f;
+
+    private float _needleRotation = NeedleMaxRotation;
+
+    private const float NeedleUpSpeed = 2.8f;
+    private const float NeedleDownSpeed = 1.6f;
+
+    private float _speed = 0.0f;
+    private const float SpeedIncreaseRate = 0.8f;
+    private const float SpeedDecreaseRate = 1.6f;
+    private const float NaturalDecayRate = 0.35f;
 
 
     public Window(GameWindowSettings gameWindowSettings, NativeWindowSettings nativeWindowSettings)
         : base(gameWindowSettings, nativeWindowSettings)
     {
-        (_render_items, _bounds) = MeshLoader.LoadExercise2();
+        (_render_items, _bounds) = MeshLoader.LoadExample();
+
+        var needle = _render_items[NeedleIndex];
+        needle.Transfom.Rotation = _needleRotation;
+        _render_items[NeedleIndex] = needle;
+    }
+
+    protected override void OnResize(ResizeEventArgs e)
+    {
+        base.OnResize(e);
+
+        GL.Viewport(0, 0, ClientSize.X, ClientSize.Y);
     }
 
     protected override void OnLoad()
     {
         base.OnLoad();
 
-        GL.ClearColor(0.85f, 0.85f, 0.88f, 1.0f);
+        GL.Viewport(0, 0, ClientSize.X, ClientSize.Y);
+        GL.ClearColor(0.35f, 0.35f, 0.38f, 1.0f);
+
         var mesh_hash = _render_items.Select(item => item.Mesh).ToHashSet();
 
         foreach (var item in mesh_hash)
@@ -107,23 +123,40 @@ public class Window : GameWindow
             Close();
         }
 
-        if (MouseState.IsButtonPressed(MouseButton.Left))
+        float deltaTime = (float)args.Time;
+
+        bool leftMouseHeld = MouseState.IsButtonDown(
+            OpenTK.Windowing.GraphicsLibraryFramework.MouseButton.Left
+        );
+
+        bool clickedRightHalf = MouseState.X >= ClientSize.X / 2.0f;
+        bool clickedLeftHalf = MouseState.X < ClientSize.X / 2.0f;
+
+        if (leftMouseHeld && clickedRightHalf)
         {
-            foreach (var item in _render_items)
-            {
-                var x_normalized = (MouseState.X / (float)ClientSize.X) * 2 - 1;
-                var y_normalized = 1 - (MouseState.Y / (float)ClientSize.Y) * 2;
-                var localX = (x_normalized - item.Transfom.Position.X) / item.Transfom.Scale.X;
-                var localY = (y_normalized - item.Transfom.Position.Y) / item.Transfom.Scale.Y;
-                _bounds.TryGetValue(item.Mesh, out var bound);
-                if (localX <= bound.MaxX && localX >= bound.MinX && localY <= bound.MaxY && localY >= bound.MinY)
-                {
-                    var material = item.Material;
-                    material.BaseColor = rainbowColors[_current_color];
-                    _current_color = (_current_color + 1) % rainbowColors.Length;
-                }
-            }
+            _speed += SpeedIncreaseRate * deltaTime;
         }
+        else if (leftMouseHeld && clickedLeftHalf)
+        {
+            _speed -= SpeedDecreaseRate * deltaTime;
+        }
+        else
+        {
+            _speed -= NaturalDecayRate * deltaTime;
+        }
+
+        _speed = Math.Clamp(_speed, 0.0f, 1.0f);
+
+        _needleRotation = MathHelper.Lerp(
+            NeedleMaxRotation,
+            NeedleMinRotation,
+            _speed
+        );
+
+
+        var needle = _render_items[NeedleIndex];
+        needle.Transfom.Rotation = _needleRotation;
+        _render_items[NeedleIndex] = needle;
     }
 
     protected override void OnRenderFrame(FrameEventArgs args)
@@ -133,7 +166,6 @@ public class Window : GameWindow
         GL.Clear(ClearBufferMask.ColorBufferBit);
         GL.UseProgram(_shaderProgram);
 
-
         foreach (var item in _render_items)
         {
             if (!_gpu_mesh.TryGetValue(item.Mesh, out GPUMesh gpumesh) || gpumesh is null)
@@ -141,9 +173,19 @@ public class Window : GameWindow
 
             GL.BindVertexArray(gpumesh.VAO);
 
-            var translate = Matrix4.CreateTranslation(item.Transfom.Position);
+            var scale = Matrix4.CreateScale(
+                item.Transfom.Scale.X,
+                item.Transfom.Scale.Y,
+                item.Transfom.Scale.Z
+            );
+
             var rotation = Matrix4.CreateRotationZ(item.Transfom.Rotation);
-            var scale = Matrix4.CreateScale(item.Transfom.Scale);
+
+            var translate = Matrix4.CreateTranslation(
+                item.Transfom.Position.X,
+                item.Transfom.Position.Y,
+                item.Transfom.Position.Z
+            );
 
             var final_matrix = scale * rotation * translate;
 
@@ -161,7 +203,6 @@ public class Window : GameWindow
 
             GL.DrawArrays(item.Rendering_Type, 0, item.Mesh.Vertex_Count);
         }
-
 
         SwapBuffers();
     }
