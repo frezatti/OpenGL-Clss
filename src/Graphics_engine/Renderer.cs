@@ -109,13 +109,32 @@ public class Window : GameWindow
 
         if (MouseState.IsButtonPressed(MouseButton.Left))
         {
+            Console.WriteLine($"MouseState X: {MouseState.X}\n");
+            Console.WriteLine($"MouseState Y: {MouseState.Y}\n");
+            Console.WriteLine("--------------------------------------------");
+
+            var x_normalized = (MouseState.X * 2f) / (float)ClientSize.X - 1f;
+            var y_normalized = 1 - (MouseState.Y * 2f) / (float)ClientSize.Y;
+            Console.WriteLine($"x_normalized: {x_normalized}\n");
+            Console.WriteLine($"y_normalized: {y_normalized}\n");
+            Console.WriteLine("--------------------------------------------");
             foreach (var item in _render_items)
             {
-                var x_normalized = (MouseState.X / (float)ClientSize.X) * 2 - 1;
-                var y_normalized = 1 - (MouseState.Y / (float)ClientSize.Y) * 2;
                 var localX = (x_normalized - item.Transfom.Position.X) / item.Transfom.Scale.X;
                 var localY = (y_normalized - item.Transfom.Position.Y) / item.Transfom.Scale.Y;
                 _bounds.TryGetValue(item.Mesh, out var bound);
+
+                Console.WriteLine($"max X: {bound.MaxX},");
+                Console.WriteLine($"min X: {bound.MinX},");
+                Console.WriteLine($"max Y: {bound.MaxY},");
+                Console.WriteLine($"min Y: {bound.MinY},\n");
+                Console.WriteLine("--------------------------------------------\n");
+
+                Console.WriteLine($"localX: {localX}\n");
+                Console.WriteLine($"localY: {localY}\n");
+
+                Console.WriteLine("--------------------------------------------");
+
                 if (localX <= bound.MaxX && localX >= bound.MinX && localY <= bound.MaxY && localY >= bound.MinY)
                 {
                     var material = item.Material;
