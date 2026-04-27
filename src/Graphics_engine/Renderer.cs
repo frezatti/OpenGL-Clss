@@ -38,11 +38,20 @@ public class Window : GameWindow
         (_render_items, _bounds) = MeshLoader.LoadExercise2();
     }
 
+    protected override void OnResize(ResizeEventArgs e)
+    {
+        base.OnResize(e);
+
+        GL.Viewport(0, 0, ClientSize.X, ClientSize.Y);
+    }
+
     protected override void OnLoad()
     {
         base.OnLoad();
 
+        GL.Viewport(0, 0, ClientSize.X, ClientSize.Y);
         GL.ClearColor(0.85f, 0.85f, 0.88f, 1.0f);
+
         var mesh_hash = _render_items.Select(item => item.Mesh).ToHashSet();
 
         foreach (var item in mesh_hash)
@@ -109,17 +118,44 @@ public class Window : GameWindow
 
         if (MouseState.IsButtonPressed(MouseButton.Left))
         {
+            Console.WriteLine("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
+            Console.WriteLine($"Size X: {Size.X}");
+            Console.WriteLine($"Size Y: {Size.Y}");
+            Console.WriteLine("-------------------------------------------");
+            Console.WriteLine($"ClientSize X: {ClientSize.X}");
+            Console.WriteLine($"ClientSize Y: {ClientSize.Y}");
+            Console.WriteLine("-------------------------------------------");
+            Console.WriteLine($"MouseState X: {MouseState.X}");
+            Console.WriteLine($"MouseState Y: {MouseState.Y}");
+            Console.WriteLine("-------------------------------------------");
+
+            var x_normalized = (MouseState.X * 2) / (float)ClientSize.X - 1f;
+            var y_normalized = 1f - (MouseState.Y * 2f) / (float)ClientSize.Y;
+            Console.WriteLine($"x_normalized: {x_normalized}");
+            Console.WriteLine($"y_normalized: {y_normalized}");
+            Console.WriteLine("-------------------------------------------");
+
             foreach (var item in _render_items)
             {
-                var x_normalized = (MouseState.X / (float)ClientSize.X) * 2 - 1;
-                var y_normalized = 1 - (MouseState.Y / (float)ClientSize.Y) * 2;
                 var localX = (x_normalized - item.Transfom.Position.X) / item.Transfom.Scale.X;
                 var localY = (y_normalized - item.Transfom.Position.Y) / item.Transfom.Scale.Y;
+                Console.WriteLine($"localX: {localX}");
+                Console.WriteLine($"localY: {localY}");
+                Console.WriteLine("-------------------------------------------");
+
                 _bounds.TryGetValue(item.Mesh, out var bound);
+
+                Console.WriteLine($"Max X: {bound.MaxX}");
+                Console.WriteLine($"Min X: {bound.MinX}");
+                Console.WriteLine($"Max Y: {bound.MaxY}");
+                Console.WriteLine($"Min Y: {bound.MinY}");
+                Console.WriteLine("-------------------------------------------");
+
                 if (localX <= bound.MaxX && localX >= bound.MinX && localY <= bound.MaxY && localY >= bound.MinY)
                 {
                     var material = item.Material;
                     material.BaseColor = rainbowColors[_current_color];
+                    item.Material = material;
                     _current_color = (_current_color + 1) % rainbowColors.Length;
                 }
             }

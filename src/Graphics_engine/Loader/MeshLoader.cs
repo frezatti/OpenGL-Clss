@@ -174,12 +174,18 @@ public class MeshLoader
             loadedRenderItems.Add(item);
         }
 
+        var item = new RenderItem();
+        item.Mesh = MeshFactory.CreateGrid();
+        item.Rendering_Type = PrimitiveType.Lines;
+        loadedRenderItems.Add(item);
+
         var scale = new Vector3(0.42f, 0.42f, 1.0f);
 
         // Filled bird (left)
-        AddFromFile("Assets/bird_body_fill.txt", PrimitiveType.TriangleFan, (-0.3f, 0.0f, 0.0f), scale);
-        AddFromFile("Assets/bird_head_fill.txt", PrimitiveType.TriangleFan, (0.0f, 0.0f, 0.0f), scale);
-        AddFromFile("Assets/bird_wing_fill.txt", PrimitiveType.Triangles, (0.3f, 0.0f, 0.0f), scale);
+        AddFromFile("Assets/letter_1.txt", PrimitiveType.Triangles, (-0.3f, 0.0f, 0.0f), scale);
+        AddFromFile("Assets/letter_2.txt", PrimitiveType.Triangles, (0.0f, 0.0f, 0.0f), scale);
+        AddFromFile("Assets/letter_1.txt", PrimitiveType.Triangles, (0.3f, 0.0f, 0.0f), scale);
+
 
         return (loadedRenderItems.ToArray(), bounds);
     }
