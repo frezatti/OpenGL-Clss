@@ -2,9 +2,9 @@ using System.Numerics;
 
 public enum ColorMode
 {
-    VertexColor = 1,      // use the colors from the mesh
-    SolidColor = 2,       // ignore vertex colors and use one material color
-    Tinted = 3     // multiply vertex colors by the material color
+    VertexColor = 0,      // use the colors from the mesh
+    SolidColor = 1,       // ignore vertex colors and use one material color
+    Tinted = 2     // multiply vertex colors by the material color
 }
 
 public struct Material
