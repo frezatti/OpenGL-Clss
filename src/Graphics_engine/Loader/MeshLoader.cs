@@ -111,16 +111,6 @@ public class MeshLoader
         var red3 = new Vector3(1.0f, 0.1f, 0.1f);
         var yellow3 = new Vector3(1.0f, 0.85f, 0.1f);
 
-        // Optional grid
-        AddFromMesh(
-            MeshFactory.CreateGrid(),
-            PrimitiveType.Lines,
-            Vector3.Zero,
-            Vector3.One,
-            0.0f,
-            white,
-            ColorMode.VertexColor
-        );
 
         // Main speedometer arc
         AddFromMesh(
@@ -152,6 +142,16 @@ public class MeshLoader
             red
         );
 
+
+        AddFromMesh(
+            MeshFactory.CreateNeedle(0.055f, 0.55f, yellow3),
+            PrimitiveType.Triangles,
+            new Vector3(0.0f, -0.25f, 0.0f),
+            Vector3.One,
+            110.0f * MathF.PI / 180.0f,
+            yellow
+        );
+
         // Center circle
         AddFromMesh(
             MeshFactory.CreateCircle(32, 1.0f, 1.0f, 1.0f, 0.055f),
@@ -162,23 +162,12 @@ public class MeshLoader
             white
         );
 
-        // Needle
-        // Important: keep this as item index 5 if your update logic depends on index.
-        AddFromMesh(
-            MeshFactory.CreateNeedle(0.055f, 0.55f, yellow3),
-            PrimitiveType.Triangles,
-            new Vector3(0.0f, -0.25f, 0.0f),
-            Vector3.One,
-            110.0f * MathF.PI / 180.0f,
-            yellow
-        );
-
         // Left number
         AddFromMesh(
             MeshFactory.CreateSevenSegmentNumber("0", 0.12f, 0.22f, 0.025f, 0.03f, white3),
             PrimitiveType.Triangles,
             new Vector3(-0.63f, -0.52f, 0.0f),
-            Vector3.One,
+            new Vector3(0.5f, 0.5f, 1.0f),
             0.0f,
             white
         );
@@ -188,7 +177,7 @@ public class MeshLoader
             MeshFactory.CreateSevenSegmentNumber("60", 0.10f, 0.20f, 0.022f, 0.025f, white3),
             PrimitiveType.Triangles,
             new Vector3(0.0f, 0.35f, 0.0f),
-            Vector3.One,
+            new Vector3(0.5f, 0.5f, 1.0f),
             0.0f,
             white
         );
@@ -198,7 +187,7 @@ public class MeshLoader
             MeshFactory.CreateSevenSegmentNumber("120", 0.09f, 0.18f, 0.020f, 0.022f, red3),
             PrimitiveType.Triangles,
             new Vector3(0.62f, -0.52f, 0.0f),
-            Vector3.One,
+            new Vector3(0.5f, 0.5f, 1.0f),
             0.0f,
             red
         );
