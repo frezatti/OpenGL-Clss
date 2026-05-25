@@ -19,7 +19,7 @@ public class Window : GameWindow
     private int _transformLocation;
     private int _baseColorLocation;
     private int _colorModeLocation;
-    private const int NeedleIndex = 5;
+    private const int NeedleIndex = 3;
 
     private const float NeedleMinRotation = -110.0f * MathF.PI / 180.0f;
     private const float NeedleMaxRotation = 110.0f * MathF.PI / 180.0f;
