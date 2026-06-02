@@ -73,10 +73,9 @@ public class MeshLoader
     }
 
 
-    public static (RenderItem[], Dictionary<Mesh, Bounds2D>) LoadExample()
+    public static RenderItem[] LoadExample()
     {
         var loadedRenderItems = new List<RenderItem>();
-        var bounds = new Dictionary<Mesh, Bounds2D>();
 
         void AddFromMesh(
             Mesh mesh,
@@ -192,7 +191,7 @@ public class MeshLoader
             red
         );
 
-        return (loadedRenderItems.ToArray(), bounds);
+        return loadedRenderItems.ToArray();
     }
 
 }
