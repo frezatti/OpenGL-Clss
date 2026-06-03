@@ -2,7 +2,7 @@ namespace Graphics_engine.Scenes;
 
 public interface IScene
 {
-    RenderItem[] RenderItems { get; }
+    IReadOnlyList<SceneObject> Objects { get; }
 
     void Update(SceneContext context);
 }

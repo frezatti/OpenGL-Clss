@@ -67,11 +67,11 @@ public class Window : GameWindow
 
         _current_scene = new SpeedScene();
 
-        UploadRenderItems(_current_scene.RenderItems);
+        UploadRenderItems(_current_scene.Objects);
 
     }
 
-    private void UploadRenderItems(RenderItem[] renderItems)
+    private void UploadRenderItems(IReadOnlyList<SceneObject> renderItems)
     {
         var mesh_hash = renderItems.Select(item => item.Mesh).ToHashSet();
 
@@ -127,25 +127,26 @@ public class Window : GameWindow
         GL.Clear(ClearBufferMask.ColorBufferBit);
         GL.UseProgram(_shaderProgram);
 
-        foreach (var item in _current_scene.RenderItems)
+        foreach (var item in _current_scene.Objects)
         {
-            if (!_gpu_mesh.TryGetValue(item.Mesh, out GPUMesh gpumesh) || gpumesh is null)
-                continue;
+            if (!item.Visible) continue;
+
+            if (!_gpu_mesh.TryGetValue(item.Mesh, out var gpumesh) || gpumesh is null) continue;
 
             GL.BindVertexArray(gpumesh.VAO);
 
             var scale = Matrix4.CreateScale(
-                item.Transfom.Scale.X,
-                item.Transfom.Scale.Y,
-                item.Transfom.Scale.Z
+                item.Transform.Scale.X,
+                item.Transform.Scale.Y,
+                item.Transform.Scale.Z
             );
 
-            var rotation = Matrix4.CreateRotationZ(item.Transfom.Rotation);
+            var rotation = Matrix4.CreateRotationZ(item.Transform.Rotation);
 
             var translate = Matrix4.CreateTranslation(
-                item.Transfom.Position.X,
-                item.Transfom.Position.Y,
-                item.Transfom.Position.Z
+                item.Transform.Position.X,
+                item.Transform.Position.Y,
+                item.Transform.Position.Z
             );
 
             var final_matrix = scale * rotation * translate;
@@ -162,7 +163,7 @@ public class Window : GameWindow
 
             GL.Uniform1(_colorModeLocation, (int)item.Material.ColorMode);
 
-            GL.DrawArrays(item.Rendering_Type, 0, item.Mesh.Vertex_Count);
+            GL.DrawArrays(item.PrimitiveType, 0, item.Mesh.Vertex_Count);
         }
 
         SwapBuffers();

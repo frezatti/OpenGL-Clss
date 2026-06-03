@@ -73,9 +73,9 @@ public class MeshLoader
     }
 
 
-    public static RenderItem[] LoadExample()
+    public static SceneObject[] LoadExample()
     {
-        var loadedRenderItems = new List<RenderItem>();
+        var loadedRenderItems = new List<SceneObject>();
 
         void AddFromMesh(
             Mesh mesh,
@@ -86,13 +86,13 @@ public class MeshLoader
             Vector4? baseColor = null,
             ColorMode colorMode = ColorMode.SolidColor)
         {
-            var item = new RenderItem();
+            var item = new SceneObject();
 
             item.Mesh = mesh;
-            item.Rendering_Type = primitiveType;
-            item.Transfom.Position = position;
-            item.Transfom.Scale = scale;
-            item.Transfom.Rotation = rotation;
+            item.PrimitiveType = primitiveType;
+            item.Transform.Position = position;
+            item.Transform.Scale = scale;
+            item.Transform.Rotation = rotation;
 
             var material = item.Material;
             material.ColorMode = colorMode;

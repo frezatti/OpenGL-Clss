@@ -1,3 +1,4 @@
+using System.Collections;
 using OpenTK.Mathematics;
 
 namespace Graphics_engine.Scenes;
@@ -19,11 +20,13 @@ public class SpeedScene : IScene
     private const float SpeedDecreaseRate = 1.6f;
     private const float NaturalDecayRate = 0.35f;
 
-    public RenderItem[] RenderItems { get; private set; }
+    private readonly List<SceneObject> _objects = new();
+    private readonly Dictionary<ObjectId, SceneObject> _object_dictonary = new();
+    public IReadOnlyList<SceneObject> Objects => _objects;
 
     public SpeedScene()
     {
-        RenderItems = MeshLoader.LoadExample();
+        _objects = MeshLoader.LoadExample().ToList();
     }
 
     public void Update(SceneContext context)
@@ -58,7 +61,7 @@ public class SpeedScene : IScene
         );
 
 
-        var needle = RenderItems[NeedleIndex];
-        needle.Transfom.Rotation = _needleRotation;
+        var needle = _objects[NeedleIndex];
+        needle.Transform.Rotation = _needleRotation;
     }
 }
