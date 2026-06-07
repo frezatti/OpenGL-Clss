@@ -16,6 +16,7 @@ public class Window : GameWindow
     private int _transformLocation;
     private int _baseColorLocation;
     private int _colorModeLocation;
+    private MouseState _previousMouseState;
 
 
 
@@ -65,7 +66,7 @@ public class Window : GameWindow
         GL.DeleteShader(vertexShader);
         GL.DeleteShader(fragmentShader);
 
-        _current_scene = new SpeedScene();
+        _current_scene = new ModelingScene();
 
         UploadRenderItems(_current_scene.Objects);
 
@@ -113,11 +114,15 @@ public class Window : GameWindow
         {
             DeltaTime = (float)args.Time,
             MouseState = this.MouseState,
+            PreviousMouseState = _previousMouseState,
             KeyboardState = this.KeyboardState,
             ClientWidth = ClientSize.X,
             ClientHeight = ClientSize.Y,
         };
+
         _current_scene.Update(context);
+
+        _previousMouseState = this.MouseState;
     }
 
     protected override void OnRenderFrame(FrameEventArgs args)
@@ -130,6 +135,7 @@ public class Window : GameWindow
         foreach (var item in _current_scene.Objects)
         {
             if (!item.Visible) continue;
+
 
             if (!_gpu_mesh.TryGetValue(item.Mesh, out var gpumesh) || gpumesh is null) continue;
 
@@ -152,6 +158,15 @@ public class Window : GameWindow
             var final_matrix = scale * rotation * translate;
 
             GL.UniformMatrix4(_transformLocation, true, ref final_matrix);
+
+            var baseColor = item.Material.BaseColor;
+
+            if (item.Selected)
+            {
+                baseColor.X = MathF.Min(baseColor.X + 0.25f, 1.0f);
+                baseColor.Y = MathF.Min(baseColor.Y + 0.25f, 1.0f);
+                baseColor.Z = MathF.Min(baseColor.Z + 0.25f, 1.0f);
+            }
 
             GL.Uniform4(
                 _baseColorLocation,

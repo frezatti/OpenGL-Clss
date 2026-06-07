@@ -4,4 +4,5 @@ public class Mesh
 {
     public float[] Vertice_Data { get; set; } = [];
     public int Vertex_Count { get; set; }
+    public Bounds3D Bounds { get; set; }
 }

@@ -14,6 +14,7 @@ public enum ObjectDirtyFlags
     Visibility = 1 << 3,
     Created = 1 << 4,
     Deleted = 1 << 5,
+    Selection = 1 << 6,
 }
 
 public sealed class SceneObject

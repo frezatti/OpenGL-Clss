@@ -57,7 +57,7 @@ public class MeshLoader
                 }
             }
             mesh.Vertice_Data = loadedNumbers.ToArray();
-            mesh.Vertex_Count = mesh.Vertice_Data.Length / 6;
+            MeshUtilities.FinalizeMesh(mesh);
 
 
         }

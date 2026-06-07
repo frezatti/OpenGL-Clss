@@ -21,7 +21,6 @@ public class SpeedScene : IScene
     private const float NaturalDecayRate = 0.35f;
 
     private readonly List<SceneObject> _objects = new();
-    private readonly Dictionary<ObjectId, SceneObject> _object_dictonary = new();
     public IReadOnlyList<SceneObject> Objects => _objects;
 
     public SpeedScene()

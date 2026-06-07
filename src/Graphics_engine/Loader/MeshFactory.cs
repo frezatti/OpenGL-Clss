@@ -75,7 +75,7 @@ public class MeshFactory
             angle_in_radians += delta;
         }
         mesh.Vertice_Data = points.ToArray();
-        mesh.Vertex_Count = mesh.Vertice_Data.Length / 6;
+        MeshUtilities.FinalizeMesh(mesh);
         return mesh;
     }
 
@@ -99,7 +99,7 @@ public class MeshFactory
             angle_in_radians += delta;
         }
         mesh.Vertice_Data = points.ToArray();
-        mesh.Vertex_Count = mesh.Vertice_Data.Length / 6;
+        MeshUtilities.FinalizeMesh(mesh);
         return mesh;
     }
 
@@ -121,7 +121,7 @@ public class MeshFactory
         AddPoint(points, -width / 2, length, 0, new Vector3(1.0f, 1.0f, 1.0f));
 
         mesh.Vertice_Data = points.ToArray();
-        mesh.Vertex_Count = mesh.Vertice_Data.Length / 6;
+        MeshUtilities.FinalizeMesh(mesh);
 
         return mesh;
     }
@@ -164,7 +164,7 @@ public class MeshFactory
 
         }
         mesh.Vertice_Data = points.ToArray();
-        mesh.Vertex_Count = mesh.Vertice_Data.Length / 6;
+        MeshUtilities.FinalizeMesh(mesh);
         return mesh;
     }
 
@@ -180,7 +180,7 @@ public class MeshFactory
         AddPoint(points, 0.0f, length, 0.0f, actualColor);
 
         mesh.Vertice_Data = points.ToArray();
-        mesh.Vertex_Count = mesh.Vertice_Data.Length / 6;
+        MeshUtilities.FinalizeMesh(mesh);
 
         return mesh;
     }
@@ -207,7 +207,7 @@ public class MeshFactory
         }
 
         mesh.Vertice_Data = points.ToArray();
-        mesh.Vertex_Count = mesh.Vertice_Data.Length / 6;
+        MeshUtilities.FinalizeMesh(mesh);
 
         return mesh;
     }
@@ -217,6 +217,7 @@ public class MeshFactory
     {
         var mesh = new Mesh();
 
+        MeshUtilities.FinalizeMesh(mesh);
         return mesh;
     }
 
@@ -259,6 +260,7 @@ public class MeshFactory
         mesh.Vertice_Data = grid.ToArray();
         mesh.Vertex_Count = mesh.Vertice_Data.Length / 6;
 
+        MeshUtilities.FinalizeMesh(mesh);
         return mesh;
     }
 
@@ -291,7 +293,7 @@ public class MeshFactory
         }
 
         mesh.Vertice_Data = points.ToArray();
-        mesh.Vertex_Count = mesh.Vertice_Data.Length / 6;
+        MeshUtilities.FinalizeMesh(mesh);
 
         return mesh;
     }
@@ -384,7 +386,7 @@ public class MeshFactory
         }
 
         mesh.Vertice_Data = points.ToArray();
-        mesh.Vertex_Count = mesh.Vertice_Data.Length / 6;
+        MeshUtilities.FinalizeMesh(mesh);
 
         return mesh;
     }
