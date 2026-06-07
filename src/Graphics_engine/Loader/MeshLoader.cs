@@ -92,7 +92,7 @@ public class MeshLoader
             item.PrimitiveType = primitiveType;
             item.Transform.Position = position;
             item.Transform.Scale = scale;
-            item.Transform.Rotation = rotation;
+            item.Transform.Rotation = new Vector3(0.0f, 0.0f, rotation);
 
             var material = item.Material;
             material.ColorMode = colorMode;
