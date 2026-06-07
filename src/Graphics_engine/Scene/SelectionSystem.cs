@@ -30,8 +30,9 @@ public static class SelectionSystem
 
             float localX = (worldX - obj.Transform.Position.X) / obj.Transform.Scale.X;
             float localY = (worldY - obj.Transform.Position.Y) / obj.Transform.Scale.Y;
+            float localZ = 0.0f;
 
-            if (obj.Mesh.Bounds.Contains(localX, localY))
+            if (obj.Mesh.Bounds.Contains(localX, localY, localZ))
             {
                 clickedObject = obj;
                 break;
