@@ -1,6 +1,5 @@
 using System.Numerics;
 using Graphics_engine;
-using OpenTK.Graphics.OpenGL4;
 
 public class MeshFactory
 {
@@ -12,6 +11,17 @@ public class MeshFactory
         points.Add(color.X);
         points.Add(color.Y);
         points.Add(color.Z);
+    }
+
+    private static Mesh BuildMesh(List<float> points)
+    {
+        var mesh = new Mesh
+        {
+            Vertice_Data = points.ToArray()
+        };
+
+        MeshUtilities.FinalizeMesh(mesh);
+        return mesh;
     }
 
     public static Mesh CreateTriangle(float r, float g, float b)
@@ -54,144 +64,109 @@ public class MeshFactory
         return CreateRegularPolygonOutLine(segments, r, g, b, radius);
     }
 
-
     public static Mesh CreateRegularPolygon(int segments, float r, float g, float b, float radius = 1.0f)
     {
-        var mesh = new Mesh();
-
         var points = new List<float>() { 0.0f, 0.0f, 0.0f, r, g, b };
-
+        var color = new Vector3(r, g, b);
         var delta = (2 * MathF.PI) / segments;
-        var angle_in_radians = 0.0f;
+        var angleInRadians = 0.0f;
 
         for (var i = 0; i < segments + 1; i++)
         {
-            var x = radius * MathF.Cos(angle_in_radians);
-            var y = radius * MathF.Sin(angle_in_radians);
-            var z = 0.0f;
+            var x = radius * MathF.Cos(angleInRadians);
+            var y = radius * MathF.Sin(angleInRadians);
 
-            AddPoint(points, x, y, z, new Vector3(r, g, b));
-
-            angle_in_radians += delta;
+            AddPoint(points, x, y, 0.0f, color);
+            angleInRadians += delta;
         }
-        mesh.Vertice_Data = points.ToArray();
-        MeshUtilities.FinalizeMesh(mesh);
-        return mesh;
+
+        return BuildMesh(points);
     }
 
     public static Mesh CreateRegularPolygonOutLine(int segments, float r, float g, float b, float radius = 1.0f)
     {
-        var mesh = new Mesh();
-
         var points = new List<float>();
-
+        var color = new Vector3(r, g, b);
         var delta = (2 * MathF.PI) / segments;
-        var angle_in_radians = 0.0f;
+        var angleInRadians = 0.0f;
 
         for (var i = 0; i < segments; i++)
         {
-            var x = radius * MathF.Cos(angle_in_radians);
-            var y = radius * MathF.Sin(angle_in_radians);
-            var z = 0.0f;
+            var x = radius * MathF.Cos(angleInRadians);
+            var y = radius * MathF.Sin(angleInRadians);
 
-            AddPoint(points, x, y, z, new Vector3(r, g, b));
-
-            angle_in_radians += delta;
+            AddPoint(points, x, y, 0.0f, color);
+            angleInRadians += delta;
         }
-        mesh.Vertice_Data = points.ToArray();
-        MeshUtilities.FinalizeMesh(mesh);
-        return mesh;
+
+        return BuildMesh(points);
     }
 
     public static Mesh CreateRectangleBase(float width, float length)
     {
-        var mesh = new Mesh();
         var points = new List<float>();
+        var color = new Vector3(1.0f, 1.0f, 1.0f);
 
-        //left bottom
-        AddPoint(points, -width / 2, 0, 0, new Vector3(1.0f, 1.0f, 1.0f));
-        //right bottom 
-        AddPoint(points, width / 2, 0, 0, new Vector3(1.0f, 1.0f, 1.0f));
-        //right top 
-        AddPoint(points, width / 2, length, 0, new Vector3(1.0f, 1.0f, 1.0f));
+        AddPoint(points, -width / 2, 0, 0, color);
+        AddPoint(points, width / 2, 0, 0, color);
+        AddPoint(points, width / 2, length, 0, color);
 
+        AddPoint(points, -width / 2, 0, 0, color);
+        AddPoint(points, width / 2, length, 0, color);
+        AddPoint(points, -width / 2, length, 0, color);
 
-        AddPoint(points, -width / 2, 0, 0, new Vector3(1.0f, 1.0f, 1.0f));
-        AddPoint(points, width / 2, length, 0, new Vector3(1.0f, 1.0f, 1.0f));
-        AddPoint(points, -width / 2, length, 0, new Vector3(1.0f, 1.0f, 1.0f));
-
-        mesh.Vertice_Data = points.ToArray();
-        MeshUtilities.FinalizeMesh(mesh);
-
-        return mesh;
+        return BuildMesh(points);
     }
 
-    public static Mesh CreateRectangleCenter(float width, float heigth)
+    public static Mesh CreateRectangleCenter(float width, float height)
     {
-        var mesh = new Mesh();
         var points = new List<float>();
+        AddRectangle(
+            points,
+            -width / 2.0f,
+            -height / 2.0f,
+            width / 2.0f,
+            height / 2.0f,
+            new Vector3(1.0f, 1.0f, 1.0f)
+        );
 
-        return mesh;
+        return BuildMesh(points);
     }
 
     public static Mesh CreateTickMarks(float innerRadius, float outerRadius, float startAngle, float endAngle, int tickCount, Vector3? color)
     {
-        var mesh = new Mesh();
         var points = new List<float>();
-
-        var angle_in_radians_start = startAngle * MathF.PI / 180.0f;
-        var angle_in_radians_end = endAngle * MathF.PI / 180.0f;
-        var delta = (angle_in_radians_end - angle_in_radians_start) / (tickCount - 1);
-        var angle_in_radians = angle_in_radians_start;
-
-
+        var start = startAngle * MathF.PI / 180.0f;
+        var end = endAngle * MathF.PI / 180.0f;
+        var delta = (end - start) / (tickCount - 1);
         var actualColor = color ?? new Vector3(1f, 1f, 1f);
 
         for (var i = 0; i < tickCount; i++)
         {
-            angle_in_radians = angle_in_radians_start + i * delta;
-
-            var x_inner = innerRadius * MathF.Cos(angle_in_radians);
-            var y_inner = innerRadius * MathF.Sin(angle_in_radians);
-
-            var x_outer = outerRadius * MathF.Cos(angle_in_radians);
-            var y_outer = outerRadius * MathF.Sin(angle_in_radians);
-
-            var z = 0.0f;
-
-            AddPoint(points, x_inner, y_inner, z, actualColor);
-            AddPoint(points, x_outer, y_outer, z, actualColor);
-
+            var angle = start + i * delta;
+            AddPoint(points, innerRadius * MathF.Cos(angle), innerRadius * MathF.Sin(angle), 0.0f, actualColor);
+            AddPoint(points, outerRadius * MathF.Cos(angle), outerRadius * MathF.Sin(angle), 0.0f, actualColor);
         }
-        mesh.Vertice_Data = points.ToArray();
-        MeshUtilities.FinalizeMesh(mesh);
-        return mesh;
+
+        return BuildMesh(points);
     }
 
     public static Mesh CreateNeedle(float width, float length, Vector3? color)
     {
-        var mesh = new Mesh();
         var points = new List<float>();
-
         var actualColor = color ?? new Vector3(1.0f, 0.0f, 0.0f);
 
         AddPoint(points, -width / 2.0f, 0.0f, 0.0f, actualColor);
         AddPoint(points, width / 2.0f, 0.0f, 0.0f, actualColor);
         AddPoint(points, 0.0f, length, 0.0f, actualColor);
 
-        mesh.Vertice_Data = points.ToArray();
-        MeshUtilities.FinalizeMesh(mesh);
-
-        return mesh;
+        return BuildMesh(points);
     }
 
     public static Mesh CreateArc(float radius, float startAngle, float endAngle, int segments, Vector3? color)
     {
-        var mesh = new Mesh();
         var points = new List<float>();
-
         var actualColor = color ?? new Vector3(1.0f, 1.0f, 1.0f);
-
         var start = startAngle * MathF.PI / 180.0f;
         var end = endAngle * MathF.PI / 180.0f;
         var delta = (end - start) / segments;
@@ -199,77 +174,101 @@ public class MeshFactory
         for (var i = 0; i <= segments; i++)
         {
             var angle = start + i * delta;
-
-            var x = radius * MathF.Cos(angle);
-            var y = radius * MathF.Sin(angle);
-
-            AddPoint(points, x, y, 0.0f, actualColor);
+            AddPoint(points, radius * MathF.Cos(angle), radius * MathF.Sin(angle), 0.0f, actualColor);
         }
 
-        mesh.Vertice_Data = points.ToArray();
-        MeshUtilities.FinalizeMesh(mesh);
-
-        return mesh;
+        return BuildMesh(points);
     }
-
 
     public static Mesh CreateLine()
     {
-        var mesh = new Mesh();
-
-        MeshUtilities.FinalizeMesh(mesh);
-        return mesh;
+        return BuildMesh(new List<float>());
     }
 
     public static Mesh CreateGrid()
     {
-        var mesh = new Mesh();
         var grid = new List<float>();
 
-        // vertical lines
         for (float x = -1.0f; x <= 1.0001f; x += 0.1f)
         {
             bool isAxis = Math.Abs(x) < 0.0001f;
-
             float r = isAxis ? 0.7f : 0.10f;
             float g = isAxis ? 0.7f : 0.10f;
             float b = isAxis ? 0.7f : 0.10f;
+            var color = new Vector3(r, g, b);
 
-            grid.Add(x); grid.Add(-1.0f); grid.Add(0.0f);
-            grid.Add(r); grid.Add(g); grid.Add(b);
-
-            grid.Add(x); grid.Add(1.0f); grid.Add(0.0f);
-            grid.Add(r); grid.Add(g); grid.Add(b);
+            AddPoint(grid, x, -1.0f, 0.0f, color);
+            AddPoint(grid, x, 1.0f, 0.0f, color);
         }
 
-        // horizontal lines
         for (float y = -1.0f; y <= 1.0001f; y += 0.1f)
         {
             bool isAxis = Math.Abs(y) < 0.0001f;
-
             float r = isAxis ? 0.7f : 0.10f;
             float g = isAxis ? 0.7f : 0.10f;
             float b = isAxis ? 0.7f : 0.10f;
+            var color = new Vector3(r, g, b);
 
-            grid.Add(-1.0f); grid.Add(y); grid.Add(0.0f);
-            grid.Add(r); grid.Add(g); grid.Add(b);
-
-            grid.Add(1.0f); grid.Add(y); grid.Add(0.0f);
-            grid.Add(r); grid.Add(g); grid.Add(b);
+            AddPoint(grid, -1.0f, y, 0.0f, color);
+            AddPoint(grid, 1.0f, y, 0.0f, color);
         }
-        mesh.Vertice_Data = grid.ToArray();
-        mesh.Vertex_Count = mesh.Vertice_Data.Length / 6;
 
-        MeshUtilities.FinalizeMesh(mesh);
-        return mesh;
+        return BuildMesh(grid);
     }
 
-    public static Mesh CreateSevenSegmentNumber(string text, float digitWidth = 0.18f, float digitHeight = 0.32f, float thickness = 0.035f, float spacing = 0.04f, System.Numerics.Vector3? color = null)
+    public static Mesh CreateCube(float size = 1.0f, Vector3? color = null)
     {
-        var mesh = new Mesh();
         var points = new List<float>();
+        var c = color ?? new Vector3(0.8f, 0.8f, 0.8f);
+        float h = size / 2.0f;
 
-        var actualColor = color ?? new System.Numerics.Vector3(1.0f, 1.0f, 1.0f);
+        void AddTriangle(Vector3 a, Vector3 b, Vector3 d)
+        {
+            AddPoint(points, a.X, a.Y, a.Z, c);
+            AddPoint(points, b.X, b.Y, b.Z, c);
+            AddPoint(points, d.X, d.Y, d.Z, c);
+        }
+
+        var p000 = new Vector3(-h, -h, -h);
+        var p001 = new Vector3(-h, -h, h);
+        var p010 = new Vector3(-h, h, -h);
+        var p011 = new Vector3(-h, h, h);
+        var p100 = new Vector3(h, -h, -h);
+        var p101 = new Vector3(h, -h, h);
+        var p110 = new Vector3(h, h, -h);
+        var p111 = new Vector3(h, h, h);
+
+        // Front (+Z)
+        AddTriangle(p001, p101, p111);
+        AddTriangle(p001, p111, p011);
+
+        // Back (-Z)
+        AddTriangle(p100, p000, p010);
+        AddTriangle(p100, p010, p110);
+
+        // Left (-X)
+        AddTriangle(p000, p001, p011);
+        AddTriangle(p000, p011, p010);
+
+        // Right (+X)
+        AddTriangle(p101, p100, p110);
+        AddTriangle(p101, p110, p111);
+
+        // Top (+Y)
+        AddTriangle(p010, p011, p111);
+        AddTriangle(p010, p111, p110);
+
+        // Bottom (-Y)
+        AddTriangle(p000, p100, p101);
+        AddTriangle(p000, p101, p001);
+
+        return BuildMesh(points);
+    }
+
+    public static Mesh CreateSevenSegmentNumber(string text, float digitWidth = 0.18f, float digitHeight = 0.32f, float thickness = 0.035f, float spacing = 0.04f, Vector3? color = null)
+    {
+        var points = new List<float>();
+        var actualColor = color ?? new Vector3(1.0f, 1.0f, 1.0f);
 
         float totalWidth = text.Length * digitWidth + (text.Length - 1) * spacing;
         float startX = -totalWidth / 2.0f;
@@ -285,28 +284,16 @@ public class MeshFactory
             }
 
             int digit = character - '0';
-
             float x = startX + i * (digitWidth + spacing);
             float y = startY;
 
             AddDigit(points, digit, x, y, digitWidth, digitHeight, thickness, actualColor);
         }
 
-        mesh.Vertice_Data = points.ToArray();
-        MeshUtilities.FinalizeMesh(mesh);
-
-        return mesh;
+        return BuildMesh(points);
     }
 
-    private static void AddDigit(
-        List<float> points,
-        int digit,
-        float x,
-        float y,
-        float width,
-        float height,
-        float thickness,
-        System.Numerics.Vector3 color)
+    private static void AddDigit(List<float> points, int digit, float x, float y, float width, float height, float thickness, Vector3 color)
     {
         bool[] segments = digit switch
         {
@@ -325,49 +312,21 @@ public class MeshFactory
 
         float halfHeight = height / 2.0f;
 
-        if (segments[0])
-            AddRectangle(points, x + thickness, y + height - thickness, x + width - thickness, y + height, color);
-
-        if (segments[1])
-            AddRectangle(points, x + width - thickness, y + halfHeight, x + width, y + height - thickness, color);
-
-        if (segments[2])
-            AddRectangle(points, x + width - thickness, y + thickness, x + width, y + halfHeight, color);
-
-        if (segments[3])
-            AddRectangle(points, x + thickness, y, x + width - thickness, y + thickness, color);
-
-        if (segments[4])
-            AddRectangle(points, x, y + thickness, x + thickness, y + halfHeight, color);
-
-        if (segments[5])
-            AddRectangle(points, x, y + halfHeight, x + thickness, y + height - thickness, color);
-
-        if (segments[6])
-            AddRectangle(
-                points,
-                x + thickness,
-                y + halfHeight - thickness / 2.0f,
-                x + width - thickness,
-                y + halfHeight + thickness / 2.0f,
-                color
-            );
+        if (segments[0]) AddRectangle(points, x + thickness, y + height - thickness, x + width - thickness, y + height, color);
+        if (segments[1]) AddRectangle(points, x + width - thickness, y + halfHeight, x + width, y + height - thickness, color);
+        if (segments[2]) AddRectangle(points, x + width - thickness, y + thickness, x + width, y + halfHeight, color);
+        if (segments[3]) AddRectangle(points, x + thickness, y, x + width - thickness, y + thickness, color);
+        if (segments[4]) AddRectangle(points, x, y + thickness, x + thickness, y + halfHeight, color);
+        if (segments[5]) AddRectangle(points, x, y + halfHeight, x + thickness, y + height - thickness, color);
+        if (segments[6]) AddRectangle(points, x + thickness, y + halfHeight - thickness / 2.0f, x + width - thickness, y + halfHeight + thickness / 2.0f, color);
     }
 
-    private static void AddRectangle(
-        List<float> points,
-        float minX,
-        float minY,
-        float maxX,
-        float maxY,
-        System.Numerics.Vector3 color)
+    private static void AddRectangle(List<float> points, float minX, float minY, float maxX, float maxY, Vector3 color)
     {
-        // Triangle 1
         AddPoint(points, minX, minY, 0.0f, color);
         AddPoint(points, maxX, minY, 0.0f, color);
         AddPoint(points, maxX, maxY, 0.0f, color);
 
-        // Triangle 2
         AddPoint(points, minX, minY, 0.0f, color);
         AddPoint(points, maxX, maxY, 0.0f, color);
         AddPoint(points, minX, maxY, 0.0f, color);
@@ -375,9 +334,7 @@ public class MeshFactory
 
     public static Mesh CreateMeshFromPoints(IReadOnlyList<Vector3> positions, Vector3? color = null)
     {
-        var mesh = new Mesh();
         var points = new List<float>();
-
         var actualColor = color ?? new Vector3(1.0f, 1.0f, 1.0f);
 
         foreach (var position in positions)
@@ -385,12 +342,6 @@ public class MeshFactory
             AddPoint(points, position.X, position.Y, position.Z, actualColor);
         }
 
-        mesh.Vertice_Data = points.ToArray();
-        MeshUtilities.FinalizeMesh(mesh);
-
-        return mesh;
+        return BuildMesh(points);
     }
-
 }
-
-
