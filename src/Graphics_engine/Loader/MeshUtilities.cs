@@ -2,15 +2,29 @@ namespace Graphics_engine;
 
 public class MeshUtilities
 {
-
     public static void FinalizeMesh(Mesh mesh)
     {
+        if (mesh.Vertice_Data.Length % 6 != 0)
+        {
+            throw new InvalidOperationException(
+                "Mesh vertex data must use 6 floats per vertex: x, y, z, r, g, b."
+            );
+        }
+
         mesh.Vertex_Count = mesh.Vertice_Data.Length / 6;
         mesh.Bounds = CalculateBounds(mesh.Vertice_Data);
     }
 
     public static Bounds3D CalculateBounds(float[] vertices)
     {
+        if (vertices.Length % 6 != 0)
+        {
+            throw new ArgumentException(
+                "Vertex data length must be divisible by 6.",
+                nameof(vertices)
+            );
+        }
+
         if (vertices.Length < 6)
         {
             return new Bounds3D(0, 0, 0, 0, 0, 0);

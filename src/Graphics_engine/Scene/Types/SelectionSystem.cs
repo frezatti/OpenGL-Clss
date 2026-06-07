@@ -1,6 +1,10 @@
 using OpenTK.Windowing.GraphicsLibraryFramework;
 namespace Graphics_engine.Scenes;
 
+// Temporary selection bridge.
+// This maps mouse position directly to normalized X/Y and uses localZ = 0.
+// It does not account for camera projection, depth, or object rotation.
+// Replace with ray picking after matrix convention and camera controls are stable.
 public static class SelectionSystem
 {
     public static void Update(ModelingScene scene, SceneContext context)

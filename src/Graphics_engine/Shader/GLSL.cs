@@ -16,7 +16,7 @@ public static class GLSL
 
                 void main()
                 {
-                    gl_Position = projection * view * model * vec4(aPosition, 1.0);
+                    gl_Position = vec4(aPosition, 1.0) * model * view * projection;
                     vertexColor = aColor;
                 }";
 
@@ -28,6 +28,7 @@ public static class GLSL
 
                 uniform vec4 baseColor;
                 uniform int colorMode;
+                uniform bool selected;
 
                 void main()
                 {
@@ -40,6 +41,11 @@ public static class GLSL
                     else if (colorMode == 2)
                     {
                         finalColor = vertexColor * baseColor.rgb;
+                    }
+
+                    if (selected)
+                    {
+                        finalColor = min(finalColor + vec3(0.25), vec3(1.0));
                     }
 
                     FragColor = vec4(finalColor, baseColor.a);

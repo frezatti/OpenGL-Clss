@@ -5,6 +5,7 @@ using Graphics_engine.Shader;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 using OpenTK.Mathematics;
 using Graphics_engine.Scenes;
+using NumericsMatrix4x4 = System.Numerics.Matrix4x4;
 
 namespace Graphics_engine;
 
@@ -21,6 +22,8 @@ public class Window : GameWindow
     private int _baseColorLocation;
     private int _colorModeLocation;
     private MouseState _previousMouseState;
+    private int _selectedLocation;
+    private KeyboardState _previousKeyboardState;
 
     public Window(GameWindowSettings gameWindowSettings, NativeWindowSettings nativeWindowSettings)
         : base(gameWindowSettings, nativeWindowSettings)
@@ -59,6 +62,7 @@ public class Window : GameWindow
         _projectionLocation = GL.GetUniformLocation(_shaderProgram, "projection");
         _baseColorLocation = GL.GetUniformLocation(_shaderProgram, "baseColor");
         _colorModeLocation = GL.GetUniformLocation(_shaderProgram, "colorMode");
+        _selectedLocation = GL.GetUniformLocation(_shaderProgram, "selected");
 
         GL.DetachShader(_shaderProgram, vertexShader);
         GL.DetachShader(_shaderProgram, fragmentShader);
@@ -67,6 +71,11 @@ public class Window : GameWindow
 
         _current_scene = new ModelingScene();
         UploadObjects(_current_scene.Objects);
+    }
+
+    private void SyncSceneObjects(IReadOnlyList<SceneObject> objects)
+    {
+        UploadObjects(objects);
     }
 
     private void UploadObjects(IReadOnlyList<SceneObject> objects)
@@ -117,12 +126,14 @@ public class Window : GameWindow
             MouseState = this.MouseState,
             PreviousMouseState = _previousMouseState,
             KeyboardState = this.KeyboardState,
+            PreviousKeyboardState = _previousKeyboardState,
             ClientWidth = ClientSize.X,
             ClientHeight = ClientSize.Y,
         };
 
         _current_scene.Update(context);
         _previousMouseState = this.MouseState;
+        _previousKeyboardState = this.KeyboardState;
     }
 
     protected override void OnRenderFrame(FrameEventArgs args)
@@ -133,11 +144,14 @@ public class Window : GameWindow
         GL.UseProgram(_shaderProgram);
 
         float aspectRatio = ClientSize.Y == 0 ? 1.0f : ClientSize.X / (float)ClientSize.Y;
-        var view = _camera.GetViewMatrix();
-        var projection = _camera.GetProjectionMatrix(aspectRatio);
+
+        var view = ToOpenTkMatrix(_camera.GetViewMatrix());
+        var projection = ToOpenTkMatrix(_camera.GetProjectionMatrix(aspectRatio));
 
         GL.UniformMatrix4(_viewLocation, false, ref view);
         GL.UniformMatrix4(_projectionLocation, false, ref projection);
+
+        SyncSceneObjects(_current_scene.Objects);
 
         foreach (var item in _current_scene.Objects)
         {
@@ -153,33 +167,12 @@ public class Window : GameWindow
 
             GL.BindVertexArray(gpumesh.VAO);
 
-            var scale = Matrix4.CreateScale(
-                item.Transform.Scale.X,
-                item.Transform.Scale.Y,
-                item.Transform.Scale.Z
-            );
-
-            var rotationX = Matrix4.CreateRotationX(item.Transform.Rotation.X);
-            var rotationY = Matrix4.CreateRotationY(item.Transform.Rotation.Y);
-            var rotationZ = Matrix4.CreateRotationZ(item.Transform.Rotation.Z);
-
-            var translate = Matrix4.CreateTranslation(
-                item.Transform.Position.X,
-                item.Transform.Position.Y,
-                item.Transform.Position.Z
-            );
-
-            var model = scale * rotationX * rotationY * rotationZ * translate;
+            var model = ToOpenTkMatrix(item.Transform.ToModelMatrix());
             GL.UniformMatrix4(_modelLocation, false, ref model);
 
-            var baseColor = item.Material.BaseColor;
 
-            if (item.Selected)
-            {
-                baseColor.X = MathF.Min(baseColor.X + 0.25f, 1.0f);
-                baseColor.Y = MathF.Min(baseColor.Y + 0.25f, 1.0f);
-                baseColor.Z = MathF.Min(baseColor.Z + 0.25f, 1.0f);
-            }
+            var baseColor = item.Material.BaseColor;
+            GL.Uniform1(_selectedLocation, item.Selected ? 1 : 0);
 
             GL.Uniform4(
                 _baseColorLocation,
@@ -207,5 +200,14 @@ public class Window : GameWindow
         }
 
         GL.DeleteProgram(_shaderProgram);
+    }
+    private static Matrix4 ToOpenTkMatrix(NumericsMatrix4x4 m)
+    {
+        return new Matrix4(
+            m.M11, m.M12, m.M13, m.M14,
+            m.M21, m.M22, m.M23, m.M24,
+            m.M31, m.M32, m.M33, m.M34,
+            m.M41, m.M42, m.M43, m.M44
+        );
     }
 }
