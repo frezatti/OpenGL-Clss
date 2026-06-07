@@ -1,19 +1,15 @@
-using System.Collections;
 using OpenTK.Mathematics;
 
 namespace Graphics_engine.Scenes;
 
 public class SpeedScene : IScene
 {
-    private const int NeedleIndex = 3;
+    private const int PointerIndex = 3;
 
-    private const float NeedleMinRotation = -110.0f * MathF.PI / 180.0f;
-    private const float NeedleMaxRotation = 110.0f * MathF.PI / 180.0f;
+    private const float PointerMinRotation = -110.0f * MathF.PI / 180.0f;
+    private const float PointerMaxRotation = 110.0f * MathF.PI / 180.0f;
 
-    private float _needleRotation = NeedleMaxRotation;
-
-    private const float NeedleUpSpeed = 2.8f;
-    private const float NeedleDownSpeed = 1.6f;
+    private float _pointerRotation = PointerMaxRotation;
 
     private float _speed = 0.0f;
     private const float SpeedIncreaseRate = 0.8f;
@@ -53,14 +49,13 @@ public class SpeedScene : IScene
 
         _speed = Math.Clamp(_speed, 0.0f, 1.0f);
 
-        _needleRotation = MathHelper.Lerp(
-            NeedleMaxRotation,
-            NeedleMinRotation,
+        _pointerRotation = MathHelper.Lerp(
+            PointerMaxRotation,
+            PointerMinRotation,
             _speed
         );
 
-
-        var needle = _objects[NeedleIndex];
-        needle.Transform.Rotation = _needleRotation;
+        var pointer = _objects[PointerIndex];
+        pointer.Transform.Rotation = new System.Numerics.Vector3(0.0f, 0.0f, _pointerRotation);
     }
 }
