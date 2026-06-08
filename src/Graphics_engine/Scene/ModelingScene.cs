@@ -8,6 +8,7 @@ public class ModelingScene : IScene
 {
     private ObjectId? _selectedObjectId;
     private int _nextId = 1;
+    private int _runtimeObjectNumber = 1;
     private readonly List<SceneObject> _objects = new();
     private readonly Dictionary<ObjectId, SceneObject> _objectsById = new();
     public IReadOnlyList<SceneObject> Objects => _objects;
@@ -125,9 +126,10 @@ public class ModelingScene : IScene
     {
         SelectionSystem.Update(this, context);
 
-        if (WasKeyPressed(context, Keys.C))
+        if (WasKeyPressed(context, Keys.Backspace))
         {
-            AddRuntimeCube();
+            ClearSelection();
+            return;
         }
 
         if (WasKeyPressed(context, Keys.Delete))
@@ -136,28 +138,90 @@ public class ModelingScene : IScene
             return;
         }
 
+        HandlePrimitiveCreation(context);
         UpdateSelectedObjectTransform(context);
     }
 
-    private void AddRuntimeCube()
+    private void HandlePrimitiveCreation(SceneContext context)
     {
-        int cubeNumber = _objects.Count(item => item.PrimitiveType == PrimitiveType.Triangles) + 1;
-
-        var cube = new SceneObject
+        if (WasKeyPressed(context, Keys.D1) || WasKeyPressed(context, Keys.KeyPad1))
         {
-            Name = $"Cube {cubeNumber}",
-            Mesh = MeshFactory.CreateCube(1.0f, new Vector3(0.8f, 0.5f, 0.2f)),
-            PrimitiveType = PrimitiveType.Triangles,
-            Transform = new Transform
-            {
-                Position = new Vector3(cubeNumber * 0.25f, 0.0f, 0.0f),
-                Scale = Vector3.One,
-                Rotation = Vector3.Zero
-            },
-            Material = new Material(new Vector4(0.8f, 0.5f, 0.2f, 1.0f), ColorMode.Tinted)
+            AddPrimitive(ScenePrimitiveKind.Cube);
+        }
+
+        if (WasKeyPressed(context, Keys.D2) || WasKeyPressed(context, Keys.KeyPad2))
+        {
+            AddPrimitive(ScenePrimitiveKind.Pyramid);
+        }
+
+        if (WasKeyPressed(context, Keys.D3) || WasKeyPressed(context, Keys.KeyPad3))
+        {
+            AddPrimitive(ScenePrimitiveKind.Cylinder);
+        }
+
+        if (WasKeyPressed(context, Keys.D4) || WasKeyPressed(context, Keys.KeyPad4))
+        {
+            AddPrimitive(ScenePrimitiveKind.Sphere);
+        }
+
+        if (WasKeyPressed(context, Keys.D5) || WasKeyPressed(context, Keys.KeyPad5))
+        {
+            AddPrimitive(ScenePrimitiveKind.Box);
+        }
+    }
+
+    private void AddPrimitive(ScenePrimitiveKind kind)
+    {
+        int number = _runtimeObjectNumber++;
+        float x = ((number - 1) % 5 - 2) * 1.25f;
+        float z = -((number - 1) / 5) * 1.25f;
+        var position = new Vector3(x, 0.0f, z);
+        SceneObject obj = kind switch
+        {
+            ScenePrimitiveKind.Cube => SceneObjectFactory.CreateCube(
+                $"Cube {number}",
+                position,
+                Vector3.One,
+                Vector3.Zero,
+                new Vector4(0.1f, 0.7f, 1.0f, 1.0f)
+            ),
+
+            ScenePrimitiveKind.Pyramid => SceneObjectFactory.CreatePyramid(
+                $"Pyramid {number}",
+                position,
+                Vector3.One,
+                Vector3.Zero,
+                new Vector4(1.0f, 0.55f, 0.15f, 1.0f)
+            ),
+
+            ScenePrimitiveKind.Cylinder => SceneObjectFactory.CreateCylinder(
+                $"Cylinder {number}",
+                position,
+                Vector3.One,
+                Vector3.Zero,
+                new Vector4(0.35f, 0.95f, 0.45f, 1.0f)
+            ),
+
+            ScenePrimitiveKind.Sphere => SceneObjectFactory.CreateSphere(
+                $"Sphere {number}",
+                position,
+                Vector3.One,
+                Vector3.Zero,
+                new Vector4(0.85f, 0.35f, 1.0f, 1.0f)
+            ),
+
+            ScenePrimitiveKind.Box => SceneObjectFactory.CreateCube(
+                $"Stretched Box {number}",
+                position,
+                new Vector3(1.6f, 0.65f, 0.8f),
+                Vector3.Zero,
+                new Vector4(0.95f, 0.85f, 0.25f, 1.0f)
+            ),
+
+            _ => throw new ArgumentOutOfRangeException(nameof(kind), kind, null)
         };
 
-        var id = AddObject(cube);
+        var id = AddObject(obj);
         SelectObject(id);
     }
 
@@ -203,15 +267,15 @@ public class ModelingScene : IScene
             changed = true;
         }
 
-        if (context.KeyboardState.IsKeyDown(Keys.PageUp))
+        if (context.KeyboardState.IsKeyDown(Keys.W) || context.KeyboardState.IsKeyDown(Keys.PageDown))
         {
-            position.Z += moveSpeed;
+            position.Z -= moveSpeed;
             changed = true;
         }
 
-        if (context.KeyboardState.IsKeyDown(Keys.PageDown))
+        if (context.KeyboardState.IsKeyDown(Keys.S) || context.KeyboardState.IsKeyDown(Keys.PageUp))
         {
-            position.Z -= moveSpeed;
+            position.Z += moveSpeed;
             changed = true;
         }
 
@@ -281,5 +345,14 @@ public class ModelingScene : IScene
     {
         return context.KeyboardState.IsKeyDown(key) &&
                !context.PreviousKeyboardState.IsKeyDown(key);
+    }
+
+    private enum ScenePrimitiveKind
+    {
+        Cube,
+        Pyramid,
+        Cylinder,
+        Sphere,
+        Box
     }
 }
