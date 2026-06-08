@@ -29,9 +29,9 @@ public class MeshLoader
                 line_number++;
                 if (string.IsNullOrWhiteSpace(line)) continue;
                 var points = line.Split(",");
-                if (points.Length != 6)
+                if (points.Length != 6 && points.Length != 9)
                 {
-                    loader_error = new LoaderError(LoaderErrorCode.InvalidFieldCount, $"Wrong number of parameters. Expected 6 parameters per line recevied {points.Length} parameters on Line {line_number}\n");
+                    loader_error = new LoaderError(LoaderErrorCode.InvalidFieldCount, $"Wrong number of parameters. Expected 6 or 9 parameters per line received {points.Length} parameters on Line {line_number}\n");
                     return false;
                 }
 
@@ -48,6 +48,27 @@ public class MeshLoader
                     loadedNumbers.Add(r);
                     loadedNumbers.Add(g);
                     loadedNumbers.Add(b);
+
+                    if (points.Length == 9 &&
+                        float.TryParse(points[6], CultureInfo.InvariantCulture, out float nx) &&
+                        float.TryParse(points[7], CultureInfo.InvariantCulture, out float ny) &&
+                        float.TryParse(points[8], CultureInfo.InvariantCulture, out float nz))
+                    {
+                        loadedNumbers.Add(nx);
+                        loadedNumbers.Add(ny);
+                        loadedNumbers.Add(nz);
+                    }
+                    else if (points.Length == 6)
+                    {
+                        loadedNumbers.Add(0.0f);
+                        loadedNumbers.Add(0.0f);
+                        loadedNumbers.Add(1.0f);
+                    }
+                    else
+                    {
+                        loader_error = new LoaderError(LoaderErrorCode.InvalidFloat, $"One of the normal numbers was not formatted correctly on line {line_number}\n");
+                        return false;
+                    }
                 }
                 else
                 {
