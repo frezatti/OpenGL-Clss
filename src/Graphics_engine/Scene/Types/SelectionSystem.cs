@@ -27,7 +27,7 @@ public static class SelectionSystem
         {
             var obj = scene.Objects[i];
 
-            if (!obj.Visible)
+            if (!obj.Visible || !obj.Selectable)
             {
                 continue;
             }
