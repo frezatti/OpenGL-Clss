@@ -6,12 +6,24 @@ namespace Graphics_engine.Scenes;
 
 public class ModelingScene : IScene
 {
+    private bool _deleteCommandWasDown;
+    private bool _clearSelectionCommandWasDown;
+    private bool _createCubeCommandWasDown;
+    private bool _createPyramidCommandWasDown;
+    private bool _createCylinderCommandWasDown;
+    private bool _createSphereCommandWasDown;
+    private bool _createBoxCommandWasDown;
+
     private ObjectId? _selectedObjectId;
     private int _nextId = 1;
     private int _runtimeObjectNumber = 1;
     private readonly List<SceneObject> _objects = new();
     private readonly Dictionary<ObjectId, SceneObject> _objectsById = new();
     public IReadOnlyList<SceneObject> Objects => _objects;
+    private const float EditorCommandCooldownSeconds = 0.25f;
+    private float _editorCommandCooldownRemaining;
+    private const float PrimitiveCreationCooldownSeconds = 0.25f;
+    private float _primitiveCreationCooldownRemaining;
 
     public ModelingScene()
     {
@@ -126,56 +138,108 @@ public class ModelingScene : IScene
     {
         SelectionSystem.Update(this, context);
 
-        if (WasKeyPressed(context, Keys.Backspace))
+        if (HandleSelectionCommands(context))
         {
-            ClearSelection();
             return;
         }
 
-        if (WasKeyPressed(context, Keys.Delete))
+        if (HandlePrimitiveCreation(context))
         {
-            RemoveSelectedObject();
             return;
         }
 
-        HandlePrimitiveCreation(context);
         UpdateSelectedObjectTransform(context);
     }
 
-    private void HandlePrimitiveCreation(SceneContext context)
+
+    private void UpdateEditorCommandCooldown(SceneContext context)
     {
-        if (WasKeyPressed(context, Keys.D1) || WasKeyPressed(context, Keys.KeyPad1))
+        _editorCommandCooldownRemaining = MathF.Max(
+            0.0f,
+            _editorCommandCooldownRemaining - context.DeltaTime
+        );
+    }
+    private bool CanRunEditorCommand()
+    {
+        return _editorCommandCooldownRemaining <= 0.0f;
+    }
+
+    private void StartEditorCommandCooldown()
+    {
+        _editorCommandCooldownRemaining = EditorCommandCooldownSeconds;
+    }
+
+    private bool HandleSelectionCommands(SceneContext context)
+    {
+        bool deleteDown = IsAnyKeyDown(context, Keys.Delete, Keys.X);
+
+        if (WasCommandPressed(deleteDown, ref _deleteCommandWasDown))
+        {
+            RemoveSelectedObject();
+            return true;
+        }
+
+        bool clearSelectionDown = IsAnyKeyDown(context, Keys.Backspace);
+
+        if (WasCommandPressed(clearSelectionDown, ref _clearSelectionCommandWasDown))
+        {
+            ClearSelection();
+            return true;
+        }
+
+        return false;
+    }
+
+    private bool HandlePrimitiveCreation(SceneContext context)
+    {
+        bool cubeDown = IsAnyKeyDown(context, Keys.D1, Keys.KeyPad1, Keys.C);
+
+        if (WasCommandPressed(cubeDown, ref _createCubeCommandWasDown))
         {
             AddPrimitive(ScenePrimitiveKind.Cube);
+            return true;
         }
 
-        if (WasKeyPressed(context, Keys.D2) || WasKeyPressed(context, Keys.KeyPad2))
+        bool pyramidDown = IsAnyKeyDown(context, Keys.D2, Keys.KeyPad2, Keys.P);
+
+        if (WasCommandPressed(pyramidDown, ref _createPyramidCommandWasDown))
         {
             AddPrimitive(ScenePrimitiveKind.Pyramid);
+            return true;
         }
 
-        if (WasKeyPressed(context, Keys.D3) || WasKeyPressed(context, Keys.KeyPad3))
+        bool cylinderDown = IsAnyKeyDown(context, Keys.D3, Keys.KeyPad3, Keys.Y);
+
+        if (WasCommandPressed(cylinderDown, ref _createCylinderCommandWasDown))
         {
             AddPrimitive(ScenePrimitiveKind.Cylinder);
+            return true;
         }
 
-        if (WasKeyPressed(context, Keys.D4) || WasKeyPressed(context, Keys.KeyPad4))
+        bool sphereDown = IsAnyKeyDown(context, Keys.D4, Keys.KeyPad4, Keys.O);
+
+        if (WasCommandPressed(sphereDown, ref _createSphereCommandWasDown))
         {
             AddPrimitive(ScenePrimitiveKind.Sphere);
+            return true;
         }
 
-        if (WasKeyPressed(context, Keys.D5) || WasKeyPressed(context, Keys.KeyPad5))
+        bool boxDown = IsAnyKeyDown(context, Keys.D5, Keys.KeyPad5, Keys.B);
+
+        if (WasCommandPressed(boxDown, ref _createBoxCommandWasDown))
         {
             AddPrimitive(ScenePrimitiveKind.Box);
+            return true;
         }
+
+        return false;
     }
 
     private void AddPrimitive(ScenePrimitiveKind kind)
     {
         int number = _runtimeObjectNumber++;
-        float x = ((number - 1) % 5 - 2) * 1.25f;
-        float z = -((number - 1) / 5) * 1.25f;
-        var position = new Vector3(x, 0.0f, z);
+        var position = new Vector3(0.0f, 0.0f, 0.75f);
+
         SceneObject obj = kind switch
         {
             ScenePrimitiveKind.Cube => SceneObjectFactory.CreateCube(
@@ -223,6 +287,7 @@ public class ModelingScene : IScene
 
         var id = AddObject(obj);
         SelectObject(id);
+        _primitiveCreationCooldownRemaining = PrimitiveCreationCooldownSeconds;
     }
 
     private void UpdateSelectedObjectTransform(SceneContext context)
@@ -354,5 +419,25 @@ public class ModelingScene : IScene
         Cylinder,
         Sphere,
         Box
+    }
+
+    private static bool IsAnyKeyDown(SceneContext context, params Keys[] keys)
+    {
+        foreach (var key in keys)
+        {
+            if (context.KeyboardState.IsKeyDown(key))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static bool WasCommandPressed(bool isDownNow, ref bool wasDownBefore)
+    {
+        bool pressedThisFrame = isDownNow && !wasDownBefore;
+        wasDownBefore = isDownNow;
+        return pressedThisFrame;
     }
 }
