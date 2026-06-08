@@ -12,14 +12,16 @@ public struct Material
     public Vector4 BaseColor;
     public ColorMode ColorMode;
     public string? TexturePath;
+    public Vector2 TextureScale;
 
     public bool UseTexture => !string.IsNullOrWhiteSpace(TexturePath);
 
-    public Material(Vector4 baseColor, ColorMode colorMode, string? texturePath = null)
+    public Material(Vector4 baseColor, ColorMode colorMode, string? texturePath = null, Vector2? textureScale = null)
     {
         BaseColor = baseColor;
         ColorMode = colorMode;
         TexturePath = texturePath;
+        TextureScale = textureScale ?? Vector2.One;
     }
 
     public static Material Default()
