@@ -7,28 +7,35 @@ public static class GLSL
 
                 layout (location = 0) in vec3 aPosition; 
                 layout (location = 1) in vec3 aColor; 
+                layout (location = 2) in vec3 aNormal;
 
                 uniform mat4 model;
                 uniform mat4 view;
                 uniform mat4 projection;
 
                 out vec3 vertexColor;
+                out vec3 worldNormal;
 
                 void main()
                 {
                     gl_Position = vec4(aPosition, 1.0) * model * view * projection;
                     vertexColor = aColor;
+                    worldNormal = normalize((vec4(aNormal, 0.0) * model).xyz);
                 }";
 
     public static string fragmentShader = @"
                 #version 330 core
 
                 in vec3 vertexColor;
+                in vec3 worldNormal;
                 out vec4 FragColor;
 
                 uniform vec4 baseColor;
                 uniform int colorMode;
                 uniform bool selected;
+                uniform vec3 lightDirection;
+                uniform vec3 lightColor;
+                uniform float ambientStrength;
 
                 void main()
                 {
@@ -42,6 +49,13 @@ public static class GLSL
                     {
                         finalColor = vertexColor * baseColor.rgb;
                     }
+
+                    vec3 normal = normalize(worldNormal);
+                    vec3 lightDir = normalize(-lightDirection);
+                    float diffuseStrength = max(dot(normal, lightDir), 0.0);
+                    vec3 lighting = (ambientStrength + diffuseStrength) * lightColor;
+
+                    finalColor *= lighting;
 
                     if (selected)
                     {
