@@ -23,6 +23,9 @@ public class Window : GameWindow
     private int _colorModeLocation;
     private MouseState _previousMouseState;
     private int _selectedLocation;
+    private int _lightDirectionLocation;
+    private int _lightColorLocation;
+    private int _ambientStrengthLocation;
     private KeyboardState _previousKeyboardState;
 
     public Window(GameWindowSettings gameWindowSettings, NativeWindowSettings nativeWindowSettings)
@@ -63,6 +66,9 @@ public class Window : GameWindow
         _baseColorLocation = GL.GetUniformLocation(_shaderProgram, "baseColor");
         _colorModeLocation = GL.GetUniformLocation(_shaderProgram, "colorMode");
         _selectedLocation = GL.GetUniformLocation(_shaderProgram, "selected");
+        _lightDirectionLocation = GL.GetUniformLocation(_shaderProgram, "lightDirection");
+        _lightColorLocation = GL.GetUniformLocation(_shaderProgram, "lightColor");
+        _ambientStrengthLocation = GL.GetUniformLocation(_shaderProgram, "ambientStrength");
 
         GL.DetachShader(_shaderProgram, vertexShader);
         GL.DetachShader(_shaderProgram, fragmentShader);
@@ -97,15 +103,21 @@ public class Window : GameWindow
 
             GL.CreateVertexArrays(1, out int vao);
             gpumesh.VAO = vao;
-            GL.VertexArrayVertexBuffer(gpumesh.VAO, 0, gpumesh.VBO, IntPtr.Zero, 6 * sizeof(float));
+
+            int stride = Mesh.FloatsPerVertex * sizeof(float);
+            GL.VertexArrayVertexBuffer(gpumesh.VAO, 0, gpumesh.VBO, IntPtr.Zero, stride);
 
             GL.EnableVertexArrayAttrib(gpumesh.VAO, 0);
-            GL.VertexArrayAttribFormat(gpumesh.VAO, 0, 3, VertexAttribType.Float, false, 0);
+            GL.VertexArrayAttribFormat(gpumesh.VAO, 0, Mesh.PositionFloatCount, VertexAttribType.Float, false, Mesh.PositionOffset * sizeof(float));
             GL.VertexArrayAttribBinding(gpumesh.VAO, 0, 0);
 
             GL.EnableVertexArrayAttrib(gpumesh.VAO, 1);
-            GL.VertexArrayAttribFormat(gpumesh.VAO, 1, 3, VertexAttribType.Float, false, 3 * sizeof(float));
+            GL.VertexArrayAttribFormat(gpumesh.VAO, 1, Mesh.ColorFloatCount, VertexAttribType.Float, false, Mesh.ColorOffset * sizeof(float));
             GL.VertexArrayAttribBinding(gpumesh.VAO, 1, 0);
+
+            GL.EnableVertexArrayAttrib(gpumesh.VAO, 2);
+            GL.VertexArrayAttribFormat(gpumesh.VAO, 2, Mesh.NormalFloatCount, VertexAttribType.Float, false, Mesh.NormalOffset * sizeof(float));
+            GL.VertexArrayAttribBinding(gpumesh.VAO, 2, 0);
 
             _gpu_mesh.Add(mesh, gpumesh);
         }
@@ -154,6 +166,10 @@ public class Window : GameWindow
 
         GL.UniformMatrix4(_viewLocation, true, ref view);
         GL.UniformMatrix4(_projectionLocation, true, ref projection);
+
+        GL.Uniform3(_lightDirectionLocation, -0.4f, -1.0f, -0.6f);
+        GL.Uniform3(_lightColorLocation, 1.0f, 0.96f, 0.88f);
+        GL.Uniform1(_ambientStrengthLocation, 0.35f);
 
         SyncSceneObjects(_current_scene.Objects);
 
