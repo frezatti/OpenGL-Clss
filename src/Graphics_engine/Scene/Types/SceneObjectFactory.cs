@@ -24,7 +24,8 @@ public static class SceneObjectFactory
                 Scale = scale,
                 Rotation = rotation
             },
-            Material = new Material(color, ColorMode.Tinted)
+            Material = new Material(color, ColorMode.Tinted),
+            Selectable = true
         };
     }
 
@@ -46,7 +47,80 @@ public static class SceneObjectFactory
                 Scale = scale,
                 Rotation = rotation
             },
-            Material = new Material(color, ColorMode.Tinted)
+            Material = new Material(color, ColorMode.Tinted),
+            Selectable = false
+        };
+    }
+
+    public static SceneObject CreatePyramid(
+        string name,
+        Vector3 position,
+        Vector3 scale,
+        Vector3 rotation,
+        Vector4 color)
+    {
+        return new SceneObject
+        {
+            Name = name,
+            Mesh = MeshFactory.CreatePyramid(1.0f, 1.0f, new Vector3(color.X, color.Y, color.Z)),
+            PrimitiveType = PrimitiveType.Triangles,
+            Transform = new Transform
+            {
+                Position = position,
+                Scale = scale,
+                Rotation = rotation
+            },
+            Material = new Material(color, ColorMode.Tinted),
+            Selectable = true
+        };
+    }
+
+    public static SceneObject CreateCylinder(
+        string name,
+        Vector3 position,
+        Vector3 scale,
+        Vector3 rotation,
+        Vector4 color,
+        int segments = 32)
+    {
+        return new SceneObject
+        {
+            Name = name,
+            Mesh = MeshFactory.CreateCylinder(0.5f, 1.0f, segments, new Vector3(color.X, color.Y, color.Z)),
+            PrimitiveType = PrimitiveType.Triangles,
+            Transform = new Transform
+            {
+                Position = position,
+                Scale = scale,
+                Rotation = rotation
+            },
+            Material = new Material(color, ColorMode.Tinted),
+            Selectable = true
+        };
+    }
+
+    public static SceneObject CreateSphere(
+        string name,
+        Vector3 position,
+        Vector3 scale,
+        Vector3 rotation,
+        Vector4 color,
+        int sectors = 32,
+        int stacks = 16)
+    {
+        return new SceneObject
+        {
+            Name = name,
+            Mesh = MeshFactory.CreateUVSphere(0.5f, sectors, stacks, new Vector3(color.X, color.Y, color.Z)),
+            PrimitiveType = PrimitiveType.Triangles,
+            Transform = new Transform
+            {
+                Position = position,
+                Scale = scale,
+                Rotation = rotation
+            },
+            Material = new Material(color, ColorMode.Tinted),
+            Selectable = true
         };
     }
 }
