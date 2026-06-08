@@ -371,9 +371,11 @@ public class MeshFactory
     {
         ValidatePositive(nameof(radius), radius);
         ValidateMinimum(nameof(sectors), sectors, 3);
-        ValidateMinimum(nameof(stacks), stacks, 2);
+        ValidateMinimum(nameof(stacks), stacks, 3);
+
         var points = new List<float>();
         var c = color ?? new Vector3(0.8f, 0.8f, 0.8f);
+
         float stackStep = MathF.PI / stacks;
         float sectorStep = 2.0f * MathF.PI / sectors;
 
@@ -381,13 +383,47 @@ public class MeshFactory
         {
             float phi = -MathF.PI / 2.0f + stack * stackStep;
             float theta = sector * sectorStep;
+
             float ringRadius = radius * MathF.Cos(phi);
-            return new Vector3(ringRadius * MathF.Cos(theta), radius * MathF.Sin(phi), ringRadius * MathF.Sin(theta));
+
+            return new Vector3(
+                ringRadius * MathF.Cos(theta),
+                radius * MathF.Sin(phi),
+                ringRadius * MathF.Sin(theta)
+            );
         }
 
-        Vector2 GetUv(int stack, int sector) => new Vector2(sector / (float)sectors, stack / (float)stacks);
+        Vector2 GetUv(int stack, int sector)
+        {
+            return new Vector2(
+                sector / (float)sectors,
+                stack / (float)stacks
+            );
+        }
 
-        for (int stack = 0; stack < stacks; stack++)
+        var bottomPole = new Vector3(0.0f, -radius, 0.0f);
+        var topPole = new Vector3(0.0f, radius, 0.0f);
+
+        // Bottom cap
+        for (int sector = 0; sector < sectors; sector++)
+        {
+            var p0 = GetPoint(1, sector);
+            var p1 = GetPoint(1, sector + 1);
+
+            AddTriangleUv(
+                points,
+                bottomPole,
+                p1,
+                p0,
+                new Vector2((sector + 0.5f) / sectors, 0.0f),
+                GetUv(1, sector + 1),
+                GetUv(1, sector),
+                c
+            );
+        }
+
+        // Middle bands
+        for (int stack = 1; stack < stacks - 1; stack++)
         {
             for (int sector = 0; sector < sectors; sector++)
             {
@@ -396,10 +432,48 @@ public class MeshFactory
                 var p10 = GetPoint(stack + 1, sector);
                 var p11 = GetPoint(stack + 1, sector + 1);
 
-                if (stack != 0) AddTriangleUv(points, p00, p10, p11, GetUv(stack, sector), GetUv(stack + 1, sector), GetUv(stack + 1, sector + 1), c);
-                if (stack != stacks - 1) AddTriangleUv(points, p00, p11, p01, GetUv(stack, sector), GetUv(stack + 1, sector + 1), GetUv(stack, sector + 1), c);
+                AddTriangleUv(
+                    points,
+                    p00,
+                    p10,
+                    p11,
+                    GetUv(stack, sector),
+                    GetUv(stack + 1, sector),
+                    GetUv(stack + 1, sector + 1),
+                    c
+                );
+
+                AddTriangleUv(
+                    points,
+                    p00,
+                    p11,
+                    p01,
+                    GetUv(stack, sector),
+                    GetUv(stack + 1, sector + 1),
+                    GetUv(stack, sector + 1),
+                    c
+                );
             }
         }
+
+        // Top cap
+        for (int sector = 0; sector < sectors; sector++)
+        {
+            var p0 = GetPoint(stacks - 1, sector);
+            var p1 = GetPoint(stacks - 1, sector + 1);
+
+            AddTriangleUv(
+                points,
+                p0,
+                p1,
+                topPole,
+                GetUv(stacks - 1, sector),
+                GetUv(stacks - 1, sector + 1),
+                new Vector2((sector + 0.5f) / sectors, 1.0f),
+                c
+            );
+        }
+
         return BuildMesh(points);
     }
 

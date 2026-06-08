@@ -27,7 +27,6 @@ public struct Material
     public bool UseRoughnessTexture => !string.IsNullOrWhiteSpace(RoughnessTexturePath);
     public bool UseAmbientOcclusionTexture => !string.IsNullOrWhiteSpace(AmbientOcclusionTexturePath);
 
-    // Compatibility alias for older renderer/factory code.
     public string? TexturePath
     {
         get => BaseColorTexturePath;

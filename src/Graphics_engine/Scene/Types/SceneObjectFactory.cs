@@ -5,8 +5,8 @@ namespace Graphics_engine.Scenes;
 
 public static class SceneObjectFactory
 {
-    private const string MetalMaterialDirectory = "Assets/Textures/Poliigon_MetalSteelBrushed_7174";
-    private const string SphereTexturePath = "Assets/Textures/Poliigon_WoodVeneerOak_7760";
+    private const string MetalMaterialDirectory = "Assets/Textures/Metal";
+    private const string WoodMaterialDirectory = "Assets/Textures/Wood";
 
     public static SceneObject CreateCube(string name, Vector3 position, Vector3 scale, Vector3 rotation, Vector4 color)
     {
@@ -103,7 +103,7 @@ public static class SceneObjectFactory
                 Scale = scale,
                 Rotation = rotation
             },
-            Material = new Material(color, ColorMode.Tinted, SphereTexturePath, new Vector2(1.0f, 1.0f)),
+            Material = CreateWoodMaterial(),
             Selectable = true
         };
     }
@@ -113,10 +113,10 @@ public static class SceneObjectFactory
         return Material.CreatePbr(
             new Vector4(1.0f, 1.0f, 1.0f, 1.0f),
             ColorMode.SolidColor,
-            CombineMaterialPath("Poliigon_MetalSteelBrushed_7174_BaseColor.jpg"),
-            CombineMaterialPath("Poliigon_MetalSteelBrushed_7174_Metallic.jpg"),
-            CombineMaterialPath("Poliigon_MetalSteelBrushed_7174_Roughness.jpg"),
-            CombineMaterialPath("Poliigon_MetalSteelBrushed_7174_AmbientOcclusion.jpg"),
+            CombineMaterialPath(MetalMaterialDirectory, "Poliigon_MetalSteelBrushed_7174_BaseColor.jpg"),
+            CombineMaterialPath(MetalMaterialDirectory, "Poliigon_MetalSteelBrushed_7174_Metallic.jpg"),
+            CombineMaterialPath(MetalMaterialDirectory, "Poliigon_MetalSteelBrushed_7174_Roughness.jpg"),
+            CombineMaterialPath(MetalMaterialDirectory, "Poliigon_MetalSteelBrushed_7174_AmbientOcclusion.jpg"),
             new Vector2(3.0f, 3.0f),
             metallic: 1.0f,
             roughness: 0.65f,
@@ -124,8 +124,24 @@ public static class SceneObjectFactory
         );
     }
 
-    private static string CombineMaterialPath(string fileName)
+    private static Material CreateWoodMaterial()
     {
-        return $"{MetalMaterialDirectory}/{fileName}";
+        return Material.CreatePbr(
+            new Vector4(1.0f, 1.0f, 1.0f, 1.0f),
+            ColorMode.SolidColor,
+            CombineMaterialPath(WoodMaterialDirectory, "Poliigon_WoodVeneerOak_7760_BaseColor.jpg"),
+            null,
+            CombineMaterialPath(WoodMaterialDirectory, "Poliigon_WoodVeneerOak_7760_Roughness.jpg"),
+            CombineMaterialPath(WoodMaterialDirectory, "Poliigon_WoodVeneerOak_7760_AmbientOcclusion.jpg"),
+            new Vector2(1.0f, 1.0f),
+            metallic: 0.0f,
+            roughness: 0.55f,
+            ambientOcclusion: 1.0f
+        );
+    }
+
+    private static string CombineMaterialPath(string directory, string fileName)
+    {
+        return $"{directory}/{fileName}";
     }
 }
