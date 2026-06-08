@@ -10,15 +10,15 @@ public static class SceneObjectFactory
 
     public static SceneObject CreateCube(string name, Vector3 position, Vector3 scale, Vector3 rotation, Vector4 color)
     {
-        return CreateBoxObject(name, position, scale, rotation, color, CubeTexturePath);
+        return CreateBoxObject(name, position, scale, rotation, color, CubeTexturePath, new Vector2(3.0f, 3.0f));
     }
 
     public static SceneObject CreateBox(string name, Vector3 position, Vector3 scale, Vector3 rotation, Vector4 color)
     {
-        return CreateBoxObject(name, position, scale, rotation, color, null);
+        return CreateBoxObject(name, position, scale, rotation, color, null, Vector2.One);
     }
 
-    private static SceneObject CreateBoxObject(string name, Vector3 position, Vector3 scale, Vector3 rotation, Vector4 color, string? texturePath)
+    private static SceneObject CreateBoxObject(string name, Vector3 position, Vector3 scale, Vector3 rotation, Vector4 color, string? texturePath, Vector2 textureScale)
     {
         return new SceneObject
         {
@@ -31,7 +31,7 @@ public static class SceneObjectFactory
                 Scale = scale,
                 Rotation = rotation
             },
-            Material = new Material(color, ColorMode.Tinted, texturePath),
+            Material = new Material(color, ColorMode.Tinted, texturePath, textureScale),
             Selectable = true
         };
     }
@@ -103,7 +103,7 @@ public static class SceneObjectFactory
                 Scale = scale,
                 Rotation = rotation
             },
-            Material = new Material(color, ColorMode.Tinted, SphereTexturePath),
+            Material = new Material(color, ColorMode.Tinted, SphereTexturePath, new Vector2(1.0f, 1.0f)),
             Selectable = true
         };
     }
