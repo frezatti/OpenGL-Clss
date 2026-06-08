@@ -6,8 +6,15 @@ namespace Graphics_engine.Scenes;
 
 public static class SceneObjectFactory
 {
-    private const string CubeTexturePath = "Assets/Textures/cube.png";
-    private const string SphereTexturePath = "Assets/Textures/sphere.png";
+    private static readonly string? CubeTexturePath = FindFirstExistingTexturePath(
+        "Assets/Textures/cube.png",
+        "Assets/Textures/square.png"
+    );
+
+    private static readonly string? SphereTexturePath = FindFirstExistingTexturePath(
+        "Assets/Textures/sphere.png",
+        "Assets/Textures/ball.png"
+    );
 
     public static SceneObject CreateCube(
         string name,
@@ -15,6 +22,41 @@ public static class SceneObjectFactory
         Vector3 scale,
         Vector3 rotation,
         Vector4 color)
+    {
+        return CreateBoxObject(
+            name,
+            position,
+            scale,
+            rotation,
+            color,
+            CubeTexturePath
+        );
+    }
+
+    public static SceneObject CreateBox(
+        string name,
+        Vector3 position,
+        Vector3 scale,
+        Vector3 rotation,
+        Vector4 color)
+    {
+        return CreateBoxObject(
+            name,
+            position,
+            scale,
+            rotation,
+            color,
+            null
+        );
+    }
+
+    private static SceneObject CreateBoxObject(
+        string name,
+        Vector3 position,
+        Vector3 scale,
+        Vector3 rotation,
+        Vector4 color,
+        string? texturePath)
     {
         return new SceneObject
         {
@@ -27,7 +69,7 @@ public static class SceneObjectFactory
                 Scale = scale,
                 Rotation = rotation
             },
-            Material = new Material(color, ColorMode.Tinted, CubeTexturePath),
+            Material = new Material(color, ColorMode.Tinted, texturePath),
             Selectable = true
         };
     }
@@ -125,5 +167,18 @@ public static class SceneObjectFactory
             Material = new Material(color, ColorMode.Tinted, SphereTexturePath),
             Selectable = true
         };
+    }
+
+    private static string? FindFirstExistingTexturePath(params string[] paths)
+    {
+        foreach (var path in paths)
+        {
+            if (File.Exists(path))
+            {
+                return path;
+            }
+        }
+
+        return null;
     }
 }
