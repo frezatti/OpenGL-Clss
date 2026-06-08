@@ -7,7 +7,7 @@ public class MeshUtilities
         if (mesh.Vertice_Data.Length % Mesh.FloatsPerVertex != 0)
         {
             throw new InvalidOperationException(
-                $"Mesh vertex data must use {Mesh.FloatsPerVertex} floats per vertex: x, y, z, r, g, b, nx, ny, nz."
+                $"Mesh vertex data must use {Mesh.FloatsPerVertex} floats per vertex: x, y, z, r, g, b, nx, ny, nz, u, v."
             );
         }
 
