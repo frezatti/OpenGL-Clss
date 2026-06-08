@@ -29,6 +29,7 @@ public class Window : GameWindow
     private int _ambientStrengthLocation;
     private int _useTextureLocation;
     private int _diffuseMapLocation;
+    private int _textureScaleLocation;
     private KeyboardState _previousKeyboardState;
 
     public Window(GameWindowSettings gameWindowSettings, NativeWindowSettings nativeWindowSettings)
@@ -49,6 +50,8 @@ public class Window : GameWindow
         GL.Viewport(0, 0, ClientSize.X, ClientSize.Y);
         GL.ClearColor(0.35f, 0.35f, 0.38f, 1.0f);
         GL.Enable(EnableCap.DepthTest);
+        GL.Enable(EnableCap.Blend);
+        GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
 
         int vertexShader = GL.CreateShader(ShaderType.VertexShader);
         GL.ShaderSource(vertexShader, GLSL.vertexShader);
@@ -74,6 +77,7 @@ public class Window : GameWindow
         _ambientStrengthLocation = GL.GetUniformLocation(_shaderProgram, "ambientStrength");
         _useTextureLocation = GL.GetUniformLocation(_shaderProgram, "useTexture");
         _diffuseMapLocation = GL.GetUniformLocation(_shaderProgram, "diffuseMap");
+        _textureScaleLocation = GL.GetUniformLocation(_shaderProgram, "textureScale");
 
         GL.DetachShader(_shaderProgram, vertexShader);
         GL.DetachShader(_shaderProgram, fragmentShader);
@@ -205,6 +209,7 @@ public class Window : GameWindow
 
             bool textureBound = TryBindTexture(item.Material.TexturePath);
             GL.Uniform1(_useTextureLocation, textureBound ? 1 : 0);
+            GL.Uniform2(_textureScaleLocation, item.Material.TextureScale.X, item.Material.TextureScale.Y);
 
             GL.Uniform4(
                 _baseColorLocation,
