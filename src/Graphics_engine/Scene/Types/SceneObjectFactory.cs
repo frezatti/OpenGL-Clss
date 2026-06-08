@@ -6,6 +6,9 @@ namespace Graphics_engine.Scenes;
 
 public static class SceneObjectFactory
 {
+    private const string CubeTexturePath = "Assets/Textures/cube.png";
+    private const string SphereTexturePath = "Assets/Textures/sphere.png";
+
     public static SceneObject CreateCube(
         string name,
         Vector3 position,
@@ -24,7 +27,7 @@ public static class SceneObjectFactory
                 Scale = scale,
                 Rotation = rotation
             },
-            Material = new Material(color, ColorMode.Tinted),
+            Material = new Material(color, ColorMode.Tinted, CubeTexturePath),
             Selectable = true
         };
     }
@@ -119,7 +122,7 @@ public static class SceneObjectFactory
                 Scale = scale,
                 Rotation = rotation
             },
-            Material = new Material(color, ColorMode.Tinted),
+            Material = new Material(color, ColorMode.Tinted, SphereTexturePath),
             Selectable = true
         };
     }

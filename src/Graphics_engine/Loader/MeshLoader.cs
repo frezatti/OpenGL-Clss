@@ -29,9 +29,9 @@ public class MeshLoader
                 line_number++;
                 if (string.IsNullOrWhiteSpace(line)) continue;
                 var points = line.Split(",");
-                if (points.Length != 6 && points.Length != 9)
+                if (points.Length != 6 && points.Length != 9 && points.Length != 11)
                 {
-                    loader_error = new LoaderError(LoaderErrorCode.InvalidFieldCount, $"Wrong number of parameters. Expected 6 or 9 parameters per line received {points.Length} parameters on Line {line_number}\n");
+                    loader_error = new LoaderError(LoaderErrorCode.InvalidFieldCount, $"Wrong number of parameters. Expected 6, 9, or 11 parameters per line received {points.Length} parameters on Line {line_number}\n");
                     return false;
                 }
 
@@ -49,7 +49,7 @@ public class MeshLoader
                     loadedNumbers.Add(g);
                     loadedNumbers.Add(b);
 
-                    if (points.Length == 9 &&
+                    if (points.Length >= 9 &&
                         float.TryParse(points[6], CultureInfo.InvariantCulture, out float nx) &&
                         float.TryParse(points[7], CultureInfo.InvariantCulture, out float ny) &&
                         float.TryParse(points[8], CultureInfo.InvariantCulture, out float nz))
@@ -67,6 +67,24 @@ public class MeshLoader
                     else
                     {
                         loader_error = new LoaderError(LoaderErrorCode.InvalidFloat, $"One of the normal numbers was not formatted correctly on line {line_number}\n");
+                        return false;
+                    }
+
+                    if (points.Length == 11 &&
+                        float.TryParse(points[9], CultureInfo.InvariantCulture, out float u) &&
+                        float.TryParse(points[10], CultureInfo.InvariantCulture, out float v))
+                    {
+                        loadedNumbers.Add(u);
+                        loadedNumbers.Add(v);
+                    }
+                    else if (points.Length == 6 || points.Length == 9)
+                    {
+                        loadedNumbers.Add(x + 0.5f);
+                        loadedNumbers.Add(y + 0.5f);
+                    }
+                    else
+                    {
+                        loader_error = new LoaderError(LoaderErrorCode.InvalidFloat, $"One of the texture coordinate numbers was not formatted correctly on line {line_number}\n");
                         return false;
                     }
                 }
@@ -132,7 +150,6 @@ public class MeshLoader
         var yellow3 = new Vector3(1.0f, 0.85f, 0.1f);
 
 
-        // Main speedometer arc
         AddFromMesh(
             MeshFactory.CreateArc(0.75f, 200.0f, -20.0f, 64, white3),
             PrimitiveType.LineStrip,
@@ -142,7 +159,6 @@ public class MeshLoader
             white
         );
 
-        // Tick marks
         AddFromMesh(
             MeshFactory.CreateTickMarks(0.62f, 0.75f, 200.0f, -20.0f, 13, white3),
             PrimitiveType.Lines,
@@ -152,7 +168,6 @@ public class MeshLoader
             white
         );
 
-        // Red warning ticks on the right side
         AddFromMesh(
             MeshFactory.CreateTickMarks(0.58f, 0.75f, 20.0f, -20.0f, 4, red3),
             PrimitiveType.Lines,
@@ -161,7 +176,6 @@ public class MeshLoader
             0.0f,
             red
         );
-
 
         AddFromMesh(
             MeshFactory.CreateNeedle(0.055f, 0.55f, yellow3),
@@ -172,7 +186,6 @@ public class MeshLoader
             yellow
         );
 
-        // Center circle
         AddFromMesh(
             MeshFactory.CreateCircle(32, 1.0f, 1.0f, 1.0f, 0.055f),
             PrimitiveType.TriangleFan,
@@ -182,7 +195,6 @@ public class MeshLoader
             white
         );
 
-        // Left number
         AddFromMesh(
             MeshFactory.CreateSevenSegmentNumber("0", 0.12f, 0.22f, 0.025f, 0.03f, white3),
             PrimitiveType.Triangles,
@@ -192,7 +204,6 @@ public class MeshLoader
             white
         );
 
-        // Middle number
         AddFromMesh(
             MeshFactory.CreateSevenSegmentNumber("60", 0.10f, 0.20f, 0.022f, 0.025f, white3),
             PrimitiveType.Triangles,
@@ -202,7 +213,6 @@ public class MeshLoader
             white
         );
 
-        // Right number
         AddFromMesh(
             MeshFactory.CreateSevenSegmentNumber("120", 0.09f, 0.18f, 0.020f, 0.022f, red3),
             PrimitiveType.Triangles,
@@ -214,5 +224,4 @@ public class MeshLoader
 
         return loadedRenderItems.ToArray();
     }
-
 }

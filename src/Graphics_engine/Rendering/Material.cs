@@ -11,21 +11,22 @@ public struct Material
 {
     public Vector4 BaseColor;
     public ColorMode ColorMode;
-    public bool UseTexture;
+    public string? TexturePath;
 
-    public Material(Vector4 baseColor, ColorMode colorMode, bool useTexture = false)
+    public bool UseTexture => !string.IsNullOrWhiteSpace(TexturePath);
+
+    public Material(Vector4 baseColor, ColorMode colorMode, string? texturePath = null)
     {
         BaseColor = baseColor;
         ColorMode = colorMode;
-        UseTexture = useTexture;
+        TexturePath = texturePath;
     }
 
     public static Material Default()
     {
         return new Material(
             new Vector4(1.0f, 1.0f, 1.0f, 1.0f),
-            ColorMode.VertexColor,
-            false
+            ColorMode.VertexColor
         );
     }
 }

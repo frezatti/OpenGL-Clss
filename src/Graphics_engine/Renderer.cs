@@ -13,6 +13,7 @@ public class Window : GameWindow
 {
     private IScene _current_scene;
     private readonly Dictionary<Mesh, GPUMesh> _gpu_mesh = new Dictionary<Mesh, GPUMesh>();
+    private readonly Dictionary<string, int> _texturesByPath = new Dictionary<string, int>();
     private readonly Camera _camera = new();
 
     private int _shaderProgram;
@@ -26,6 +27,8 @@ public class Window : GameWindow
     private int _lightDirectionLocation;
     private int _lightColorLocation;
     private int _ambientStrengthLocation;
+    private int _useTextureLocation;
+    private int _diffuseMapLocation;
     private KeyboardState _previousKeyboardState;
 
     public Window(GameWindowSettings gameWindowSettings, NativeWindowSettings nativeWindowSettings)
@@ -69,6 +72,8 @@ public class Window : GameWindow
         _lightDirectionLocation = GL.GetUniformLocation(_shaderProgram, "lightDirection");
         _lightColorLocation = GL.GetUniformLocation(_shaderProgram, "lightColor");
         _ambientStrengthLocation = GL.GetUniformLocation(_shaderProgram, "ambientStrength");
+        _useTextureLocation = GL.GetUniformLocation(_shaderProgram, "useTexture");
+        _diffuseMapLocation = GL.GetUniformLocation(_shaderProgram, "diffuseMap");
 
         GL.DetachShader(_shaderProgram, vertexShader);
         GL.DetachShader(_shaderProgram, fragmentShader);
@@ -118,6 +123,10 @@ public class Window : GameWindow
             GL.EnableVertexArrayAttrib(gpumesh.VAO, 2);
             GL.VertexArrayAttribFormat(gpumesh.VAO, 2, Mesh.NormalFloatCount, VertexAttribType.Float, false, Mesh.NormalOffset * sizeof(float));
             GL.VertexArrayAttribBinding(gpumesh.VAO, 2, 0);
+
+            GL.EnableVertexArrayAttrib(gpumesh.VAO, 3);
+            GL.VertexArrayAttribFormat(gpumesh.VAO, 3, Mesh.TextureCoordinateFloatCount, VertexAttribType.Float, false, Mesh.TextureCoordinateOffset * sizeof(float));
+            GL.VertexArrayAttribBinding(gpumesh.VAO, 3, 0);
 
             _gpu_mesh.Add(mesh, gpumesh);
         }
@@ -170,6 +179,7 @@ public class Window : GameWindow
         GL.Uniform3(_lightDirectionLocation, -0.4f, -1.0f, -0.6f);
         GL.Uniform3(_lightColorLocation, 1.0f, 0.96f, 0.88f);
         GL.Uniform1(_ambientStrengthLocation, 0.35f);
+        GL.Uniform1(_diffuseMapLocation, 0);
 
         SyncSceneObjects(_current_scene.Objects);
 
@@ -190,9 +200,11 @@ public class Window : GameWindow
             var model = ToOpenTkMatrix(item.Transform.ToModelMatrix());
             GL.UniformMatrix4(_modelLocation, true, ref model);
 
-
             var baseColor = item.Material.BaseColor;
             GL.Uniform1(_selectedLocation, item.Selected ? 1 : 0);
+
+            bool textureBound = TryBindTexture(item.Material.TexturePath);
+            GL.Uniform1(_useTextureLocation, textureBound ? 1 : 0);
 
             GL.Uniform4(
                 _baseColorLocation,
@@ -219,8 +231,38 @@ public class Window : GameWindow
             GL.DeleteVertexArray(item.Value.VAO);
         }
 
+        foreach (var texture in _texturesByPath.Values)
+        {
+            GL.DeleteTexture(texture);
+        }
+
         GL.DeleteProgram(_shaderProgram);
     }
+
+    private bool TryBindTexture(string? texturePath)
+    {
+        if (string.IsNullOrWhiteSpace(texturePath))
+        {
+            GL.BindTexture(TextureTarget.Texture2D, 0);
+            return false;
+        }
+
+        if (!_texturesByPath.TryGetValue(texturePath, out int texture))
+        {
+            if (!TextureLoader.TryLoadFromFile(texturePath, out texture))
+            {
+                GL.BindTexture(TextureTarget.Texture2D, 0);
+                return false;
+            }
+
+            _texturesByPath.Add(texturePath, texture);
+        }
+
+        GL.ActiveTexture(TextureUnit.Texture0);
+        GL.BindTexture(TextureTarget.Texture2D, texture);
+        return true;
+    }
+
     private static Matrix4 ToOpenTkMatrix(NumericsMatrix4x4 m)
     {
         return new Matrix4(
