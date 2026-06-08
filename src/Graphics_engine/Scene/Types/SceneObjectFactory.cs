@@ -3,62 +3,22 @@ using OpenTK.Graphics.OpenGL4;
 
 namespace Graphics_engine.Scenes;
 
-
 public static class SceneObjectFactory
 {
-    private static readonly string? CubeTexturePath = FindFirstExistingTexturePath(
-        "Assets/Textures/metal.png",
-        "Assets/Textures/wood.png"
-    );
+    private const string CubeTexturePath = "Assets/Textures/metal.png";
+    private const string SphereTexturePath = "Assets/Textures/wood.png";
 
-
-    private static readonly string? SphereTexturePath = FindFirstExistingTexturePath(
-        "Assets/Textures/wood.png",
-        "Assets/Textures/metal.png"
-    );
-
-
-    public static SceneObject CreateCube(
-        string name,
-        Vector3 position,
-        Vector3 scale,
-        Vector3 rotation,
-        Vector4 color)
+    public static SceneObject CreateCube(string name, Vector3 position, Vector3 scale, Vector3 rotation, Vector4 color)
     {
-        return CreateBoxObject(
-            name,
-            position,
-            scale,
-            rotation,
-            color,
-            CubeTexturePath
-        );
+        return CreateBoxObject(name, position, scale, rotation, color, CubeTexturePath);
     }
 
-    public static SceneObject CreateBox(
-        string name,
-        Vector3 position,
-        Vector3 scale,
-        Vector3 rotation,
-        Vector4 color)
+    public static SceneObject CreateBox(string name, Vector3 position, Vector3 scale, Vector3 rotation, Vector4 color)
     {
-        return CreateBoxObject(
-            name,
-            position,
-            scale,
-            rotation,
-            color,
-            null
-        );
+        return CreateBoxObject(name, position, scale, rotation, color, null);
     }
 
-    private static SceneObject CreateBoxObject(
-        string name,
-        Vector3 position,
-        Vector3 scale,
-        Vector3 rotation,
-        Vector4 color,
-        string? texturePath)
+    private static SceneObject CreateBoxObject(string name, Vector3 position, Vector3 scale, Vector3 rotation, Vector4 color, string? texturePath)
     {
         return new SceneObject
         {
@@ -76,12 +36,7 @@ public static class SceneObjectFactory
         };
     }
 
-    public static SceneObject CreateGrid(
-        string name,
-        Vector3 position,
-        Vector3 scale,
-        Vector3 rotation,
-        Vector4 color)
+    public static SceneObject CreateGrid(string name, Vector3 position, Vector3 scale, Vector3 rotation, Vector4 color)
     {
         return new SceneObject
         {
@@ -99,12 +54,7 @@ public static class SceneObjectFactory
         };
     }
 
-    public static SceneObject CreatePyramid(
-        string name,
-        Vector3 position,
-        Vector3 scale,
-        Vector3 rotation,
-        Vector4 color)
+    public static SceneObject CreatePyramid(string name, Vector3 position, Vector3 scale, Vector3 rotation, Vector4 color)
     {
         return new SceneObject
         {
@@ -122,13 +72,7 @@ public static class SceneObjectFactory
         };
     }
 
-    public static SceneObject CreateCylinder(
-        string name,
-        Vector3 position,
-        Vector3 scale,
-        Vector3 rotation,
-        Vector4 color,
-        int segments = 32)
+    public static SceneObject CreateCylinder(string name, Vector3 position, Vector3 scale, Vector3 rotation, Vector4 color, int segments = 32)
     {
         return new SceneObject
         {
@@ -146,14 +90,7 @@ public static class SceneObjectFactory
         };
     }
 
-    public static SceneObject CreateSphere(
-        string name,
-        Vector3 position,
-        Vector3 scale,
-        Vector3 rotation,
-        Vector4 color,
-        int sectors = 32,
-        int stacks = 16)
+    public static SceneObject CreateSphere(string name, Vector3 position, Vector3 scale, Vector3 rotation, Vector4 color, int sectors = 32, int stacks = 16)
     {
         return new SceneObject
         {
@@ -169,18 +106,5 @@ public static class SceneObjectFactory
             Material = new Material(color, ColorMode.Tinted, SphereTexturePath),
             Selectable = true
         };
-    }
-
-    private static string? FindFirstExistingTexturePath(params string[] paths)
-    {
-        foreach (var path in paths)
-        {
-            if (File.Exists(path))
-            {
-                return path;
-            }
-        }
-
-        return null;
     }
 }
