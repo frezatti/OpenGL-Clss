@@ -42,10 +42,12 @@ public static class GLSL
                 uniform float ambientStrength;
                 uniform bool useTexture;
                 uniform sampler2D diffuseMap;
+                uniform vec2 textureScale;
 
                 void main()
                 {
                     vec3 finalColor = vertexColor;
+                    float finalAlpha = baseColor.a;
 
                     if (colorMode == 1)
                     {
@@ -58,7 +60,9 @@ public static class GLSL
 
                     if (useTexture)
                     {
-                        finalColor *= texture(diffuseMap, textureCoordinate).rgb;
+                        vec4 textureColor = texture(diffuseMap, textureCoordinate * textureScale);
+                        finalColor *= textureColor.rgb;
+                        finalAlpha *= textureColor.a;
                     }
 
                     vec3 normal = normalize(worldNormal);
@@ -73,7 +77,7 @@ public static class GLSL
                         finalColor = min(finalColor + vec3(0.25), vec3(1.0));
                     }
 
-                    FragColor = vec4(finalColor, baseColor.a);
+                    FragColor = vec4(finalColor, finalAlpha);
                 }
                 ";
 }
