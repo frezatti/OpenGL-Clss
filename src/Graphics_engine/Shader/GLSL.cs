@@ -8,6 +8,7 @@ public static class GLSL
                 layout (location = 0) in vec3 aPosition; 
                 layout (location = 1) in vec3 aColor; 
                 layout (location = 2) in vec3 aNormal;
+                layout (location = 3) in vec2 aTexCoord;
 
                 uniform mat4 model;
                 uniform mat4 view;
@@ -15,12 +16,14 @@ public static class GLSL
 
                 out vec3 vertexColor;
                 out vec3 worldNormal;
+                out vec2 textureCoordinate;
 
                 void main()
                 {
                     gl_Position = vec4(aPosition, 1.0) * model * view * projection;
                     vertexColor = aColor;
                     worldNormal = normalize((vec4(aNormal, 0.0) * model).xyz);
+                    textureCoordinate = aTexCoord;
                 }";
 
     public static string fragmentShader = @"
@@ -28,6 +31,7 @@ public static class GLSL
 
                 in vec3 vertexColor;
                 in vec3 worldNormal;
+                in vec2 textureCoordinate;
                 out vec4 FragColor;
 
                 uniform vec4 baseColor;
@@ -36,6 +40,8 @@ public static class GLSL
                 uniform vec3 lightDirection;
                 uniform vec3 lightColor;
                 uniform float ambientStrength;
+                uniform bool useTexture;
+                uniform sampler2D diffuseMap;
 
                 void main()
                 {
@@ -48,6 +54,11 @@ public static class GLSL
                     else if (colorMode == 2)
                     {
                         finalColor = vertexColor * baseColor.rgb;
+                    }
+
+                    if (useTexture)
+                    {
+                        finalColor *= texture(diffuseMap, textureCoordinate).rgb;
                     }
 
                     vec3 normal = normalize(worldNormal);
