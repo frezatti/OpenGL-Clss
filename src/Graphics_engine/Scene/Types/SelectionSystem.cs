@@ -7,11 +7,7 @@ public static class SelectionSystem
 {
     public static void Update(ModelingScene scene, SceneContext context)
     {
-        bool leftPressedThisFrame =
-            context.MouseState.IsButtonDown(MouseButton.Left) &&
-            !context.PreviousMouseState.IsButtonDown(MouseButton.Left);
-
-        if (!leftPressedThisFrame)
+        if (!context.MouseState.IsButtonDown(MouseButton.Left))
         {
             return;
         }
@@ -23,7 +19,7 @@ public static class SelectionSystem
         }
 
         SceneObject? clickedObject = null;
-        float closestDistance = float.PositiveInfinity;
+        float closestDistanceSquared = float.PositiveInfinity;
 
         foreach (var obj in scene.Objects)
         {
@@ -32,7 +28,9 @@ public static class SelectionSystem
                 continue;
             }
 
-            if (!Matrix4x4.Invert(obj.Transform.ToModelMatrix(), out var inverseModel))
+            var model = obj.Transform.ToModelMatrix();
+
+            if (!Matrix4x4.Invert(model, out var inverseModel))
             {
                 continue;
             }
@@ -40,13 +38,19 @@ public static class SelectionSystem
             var localOrigin = Vector3.Transform(rayOrigin, inverseModel);
             var localDirection = Vector3.Normalize(Vector3.TransformNormal(rayDirection, inverseModel));
 
-            if (RayIntersectsBounds(localOrigin, localDirection, obj.Mesh.Bounds, out float localDistance))
+            if (!RayIntersectsBounds(localOrigin, localDirection, obj.Mesh.Bounds, out float localDistance))
             {
-                if (localDistance < closestDistance)
-                {
-                    closestDistance = localDistance;
-                    clickedObject = obj;
-                }
+                continue;
+            }
+
+            var localHitPoint = localOrigin + localDirection * localDistance;
+            var worldHitPoint = Vector3.Transform(localHitPoint, model);
+            float worldDistanceSquared = Vector3.DistanceSquared(rayOrigin, worldHitPoint);
+
+            if (worldDistanceSquared < closestDistanceSquared)
+            {
+                closestDistanceSquared = worldDistanceSquared;
+                clickedObject = obj;
             }
         }
 
@@ -65,49 +69,78 @@ public static class SelectionSystem
         origin = Vector3.Zero;
         direction = Vector3.Zero;
 
+        if (context.ClientWidth <= 0 || context.ClientHeight <= 0)
+        {
+            return false;
+        }
+
         float mouseX = context.MouseState.X;
         float mouseY = context.MouseState.Y;
 
-        float x = (2.0f * mouseX) / context.ClientWidth - 1.0f;
-        float y = 1.0f - (2.0f * mouseY) / context.ClientHeight;
+        float ndcX = (2.0f * mouseX) / context.ClientWidth - 1.0f;
+        float ndcY = 1.0f - (2.0f * mouseY) / context.ClientHeight;
 
-        var nearPoint = new Vector3(x, y, 0.0f);
-        var farPoint = new Vector3(x, y, 1.0f);
-        var viewport = new Vector4(0.0f, 0.0f, context.ClientWidth, context.ClientHeight);
+        if (!Matrix4x4.Invert(context.ViewMatrix, out var inverseView))
+        {
+            return false;
+        }
 
-        var worldNear = Unproject(nearPoint, viewport, context.ViewMatrix, context.ProjectionMatrix);
-        var worldFar = Unproject(farPoint, viewport, context.ViewMatrix, context.ProjectionMatrix);
+        origin = new Vector3(inverseView.M41, inverseView.M42, inverseView.M43);
 
-        var ray = worldFar - worldNear;
+        // Matrix4x4.CreatePerspectiveFieldOfView uses a 0..1 depth range:
+        // z = 0 is the near plane and z = 1 is the far plane.
+        if (!TryUnproject(new Vector3(ndcX, ndcY, 0.0f), context.ViewMatrix, context.ProjectionMatrix, out var worldNear))
+        {
+            return false;
+        }
+
+        if (!TryUnproject(new Vector3(ndcX, ndcY, 1.0f), context.ViewMatrix, context.ProjectionMatrix, out var worldFar))
+        {
+            return false;
+        }
+
+        var ray = worldNear - origin;
+
+        if (ray.LengthSquared() <= float.Epsilon)
+        {
+            ray = worldFar - origin;
+        }
 
         if (ray.LengthSquared() <= float.Epsilon)
         {
             return false;
         }
 
-        origin = worldNear;
         direction = Vector3.Normalize(ray);
         return true;
     }
 
-    private static Vector3 Unproject(Vector3 normalizedDevicePoint, Vector4 viewport, Matrix4x4 view, Matrix4x4 projection)
+    private static bool TryUnproject(
+        Vector3 normalizedDevicePoint,
+        Matrix4x4 view,
+        Matrix4x4 projection,
+        out Vector3 worldPoint)
     {
-        var point = new Vector4(normalizedDevicePoint, 1.0f);
+        worldPoint = Vector3.Zero;
+
         var viewProjection = view * projection;
 
         if (!Matrix4x4.Invert(viewProjection, out var inverseViewProjection))
         {
-            return Vector3.Zero;
+            return false;
         }
 
+        var point = new Vector4(normalizedDevicePoint, 1.0f);
         var world = Vector4.Transform(point, inverseViewProjection);
 
-        if (MathF.Abs(world.W) > float.Epsilon)
+        if (MathF.Abs(world.W) <= float.Epsilon)
         {
-            world /= world.W;
+            return false;
         }
 
-        return new Vector3(world.X, world.Y, world.Z);
+        world /= world.W;
+        worldPoint = new Vector3(world.X, world.Y, world.Z);
+        return true;
     }
 
     private static bool RayIntersectsBounds(Vector3 origin, Vector3 direction, Bounds3D bounds, out float distance)
