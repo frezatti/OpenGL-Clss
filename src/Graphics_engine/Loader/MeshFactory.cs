@@ -3,21 +3,51 @@ using Graphics_engine;
 
 public class MeshFactory
 {
+    private static readonly Vector3 DefaultNormal = Vector3.UnitZ;
+
     public static void AddPoint(List<float> points, float x, float y, float z, Vector3 color)
     {
+        AddPoint(points, x, y, z, color, DefaultNormal);
+    }
+
+    private static void AddPoint(List<float> points, float x, float y, float z, Vector3 color, Vector3 normal)
+    {
+        if (normal.LengthSquared() <= 0.000001f)
+        {
+            normal = DefaultNormal;
+        }
+        else
+        {
+            normal = Vector3.Normalize(normal);
+        }
+
         points.Add(x);
         points.Add(y);
         points.Add(z);
         points.Add(color.X);
         points.Add(color.Y);
         points.Add(color.Z);
+        points.Add(normal.X);
+        points.Add(normal.Y);
+        points.Add(normal.Z);
+    }
+
+    private static Vector3 CalculateNormal(Vector3 a, Vector3 b, Vector3 c)
+    {
+        var normal = Vector3.Cross(b - a, c - a);
+
+        return normal.LengthSquared() <= 0.000001f
+            ? DefaultNormal
+            : Vector3.Normalize(normal);
     }
 
     private static void AddTriangle(List<float> points, Vector3 a, Vector3 b, Vector3 c, Vector3 color)
     {
-        AddPoint(points, a.X, a.Y, a.Z, color);
-        AddPoint(points, b.X, b.Y, b.Z, color);
-        AddPoint(points, c.X, c.Y, c.Z, color);
+        var normal = CalculateNormal(a, b, c);
+
+        AddPoint(points, a.X, a.Y, a.Z, color, normal);
+        AddPoint(points, b.X, b.Y, b.Z, color, normal);
+        AddPoint(points, c.X, c.Y, c.Z, color, normal);
     }
 
     private static void AddQuad(List<float> points, Vector3 a, Vector3 b, Vector3 c, Vector3 d, Vector3 color)
@@ -98,10 +128,12 @@ public class MeshFactory
         ValidateMinimum(nameof(segments), segments, 3);
         ValidatePositive(nameof(radius), radius);
 
-        var points = new List<float>() { 0.0f, 0.0f, 0.0f, r, g, b };
+        var points = new List<float>();
         var color = new Vector3(r, g, b);
         var delta = (2 * MathF.PI) / segments;
         var angleInRadians = 0.0f;
+
+        AddPoint(points, 0.0f, 0.0f, 0.0f, color);
 
         for (var i = 0; i < segments + 1; i++)
         {
@@ -319,27 +351,21 @@ public class MeshFactory
         var p110 = new Vector3(hx, hy, -hz);
         var p111 = new Vector3(hx, hy, hz);
 
-        // Front (+Z)
         AddTriangle(points, p001, p101, p111, c);
         AddTriangle(points, p001, p111, p011, c);
 
-        // Back (-Z)
         AddTriangle(points, p100, p000, p010, c);
         AddTriangle(points, p100, p010, p110, c);
 
-        // Left (-X)
         AddTriangle(points, p000, p001, p011, c);
         AddTriangle(points, p000, p011, p010, c);
 
-        // Right (+X)
         AddTriangle(points, p101, p100, p110, c);
         AddTriangle(points, p101, p110, p111, c);
 
-        // Top (+Y)
         AddTriangle(points, p010, p011, p111, c);
         AddTriangle(points, p010, p111, p110, c);
 
-        // Bottom (-Y)
         AddTriangle(points, p000, p100, p101, c);
         AddTriangle(points, p000, p101, p001, c);
 
@@ -363,11 +389,9 @@ public class MeshFactory
         var p11 = new Vector3(h, bottomY, h);
         var apex = new Vector3(0.0f, topY, 0.0f);
 
-        // Base (-Y)
         AddTriangle(points, p00, p10, p11, c);
         AddTriangle(points, p00, p11, p01, c);
 
-        // Sides
         AddTriangle(points, p01, p11, apex, c);
         AddTriangle(points, p10, p00, apex, c);
         AddTriangle(points, p00, p01, apex, c);
@@ -399,11 +423,9 @@ public class MeshFactory
             var top0 = new Vector3(bottom0.X, halfHeight, bottom0.Z);
             var top1 = new Vector3(bottom1.X, halfHeight, bottom1.Z);
 
-            // Side wall
             AddTriangle(points, bottom0, top0, top1, c);
             AddTriangle(points, bottom0, top1, bottom1, c);
 
-            // Caps
             AddTriangle(points, topCenter, top1, top0, c);
             AddTriangle(points, bottomCenter, bottom0, bottom1, c);
         }
@@ -432,10 +454,7 @@ public class MeshFactory
             var bottom0 = new Vector3(radius * MathF.Cos(angle0), -halfHeight, radius * MathF.Sin(angle0));
             var bottom1 = new Vector3(radius * MathF.Cos(angle1), -halfHeight, radius * MathF.Sin(angle1));
 
-            // Side
             AddTriangle(points, bottom0, apex, bottom1, c);
-
-            // Bottom cap
             AddTriangle(points, bottomCenter, bottom0, bottom1, c);
         }
 
