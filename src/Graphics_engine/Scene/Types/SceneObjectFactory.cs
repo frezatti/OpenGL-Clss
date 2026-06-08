@@ -6,11 +6,11 @@ namespace Graphics_engine.Scenes;
 public static class SceneObjectFactory
 {
     private const string MetalMaterialDirectory = "Assets/Textures/Poliigon_MetalSteelBrushed_7174";
-    private const string SphereTexturePath = "Assets/Textures/wood.png";
+    private const string SphereTexturePath = "Assets/Textures/Poliigon_WoodVeneerOak_7760";
 
     public static SceneObject CreateCube(string name, Vector3 position, Vector3 scale, Vector3 rotation, Vector4 color)
     {
-        return CreateBoxObject(name, position, scale, rotation, color, CreateMetalMaterial(color));
+        return CreateBoxObject(name, position, scale, rotation, color, CreateMetalMaterial());
     }
 
     public static SceneObject CreateBox(string name, Vector3 position, Vector3 scale, Vector3 rotation, Vector4 color)
@@ -108,11 +108,11 @@ public static class SceneObjectFactory
         };
     }
 
-    private static Material CreateMetalMaterial(Vector4 color)
+    private static Material CreateMetalMaterial()
     {
         return Material.CreatePbr(
-            color,
-            ColorMode.Tinted,
+            new Vector4(1.0f, 1.0f, 1.0f, 1.0f),
+            ColorMode.SolidColor,
             CombineMaterialPath("Poliigon_MetalSteelBrushed_7174_BaseColor.jpg"),
             CombineMaterialPath("Poliigon_MetalSteelBrushed_7174_Metallic.jpg"),
             CombineMaterialPath("Poliigon_MetalSteelBrushed_7174_Roughness.jpg"),
