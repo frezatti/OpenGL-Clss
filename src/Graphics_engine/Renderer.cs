@@ -6,6 +6,7 @@ using OpenTK.Windowing.GraphicsLibraryFramework;
 using OpenTK.Mathematics;
 using Graphics_engine.Scenes;
 using NumericsMatrix4x4 = System.Numerics.Matrix4x4;
+using NumericsVector3 = System.Numerics.Vector3;
 
 namespace Graphics_engine;
 
@@ -27,9 +28,23 @@ public class Window : GameWindow
     private int _lightDirectionLocation;
     private int _lightColorLocation;
     private int _ambientStrengthLocation;
-    private int _useTextureLocation;
-    private int _diffuseMapLocation;
+    private int _cameraPositionLocation;
+
+    private int _baseColorMapLocation;
+    private int _metallicMapLocation;
+    private int _roughnessMapLocation;
+    private int _ambientOcclusionMapLocation;
+
+    private int _useBaseColorMapLocation;
+    private int _useMetallicMapLocation;
+    private int _useRoughnessMapLocation;
+    private int _useAmbientOcclusionMapLocation;
+
     private int _textureScaleLocation;
+    private int _materialMetallicLocation;
+    private int _materialRoughnessLocation;
+    private int _materialAmbientOcclusionLocation;
+
     private KeyboardState _previousKeyboardState;
 
     public Window(GameWindowSettings gameWindowSettings, NativeWindowSettings nativeWindowSettings)
@@ -75,9 +90,22 @@ public class Window : GameWindow
         _lightDirectionLocation = GL.GetUniformLocation(_shaderProgram, "lightDirection");
         _lightColorLocation = GL.GetUniformLocation(_shaderProgram, "lightColor");
         _ambientStrengthLocation = GL.GetUniformLocation(_shaderProgram, "ambientStrength");
-        _useTextureLocation = GL.GetUniformLocation(_shaderProgram, "useTexture");
-        _diffuseMapLocation = GL.GetUniformLocation(_shaderProgram, "diffuseMap");
+        _cameraPositionLocation = GL.GetUniformLocation(_shaderProgram, "cameraPosition");
+
+        _baseColorMapLocation = GL.GetUniformLocation(_shaderProgram, "baseColorMap");
+        _metallicMapLocation = GL.GetUniformLocation(_shaderProgram, "metallicMap");
+        _roughnessMapLocation = GL.GetUniformLocation(_shaderProgram, "roughnessMap");
+        _ambientOcclusionMapLocation = GL.GetUniformLocation(_shaderProgram, "ambientOcclusionMap");
+
+        _useBaseColorMapLocation = GL.GetUniformLocation(_shaderProgram, "useBaseColorMap");
+        _useMetallicMapLocation = GL.GetUniformLocation(_shaderProgram, "useMetallicMap");
+        _useRoughnessMapLocation = GL.GetUniformLocation(_shaderProgram, "useRoughnessMap");
+        _useAmbientOcclusionMapLocation = GL.GetUniformLocation(_shaderProgram, "useAmbientOcclusionMap");
+
         _textureScaleLocation = GL.GetUniformLocation(_shaderProgram, "textureScale");
+        _materialMetallicLocation = GL.GetUniformLocation(_shaderProgram, "materialMetallic");
+        _materialRoughnessLocation = GL.GetUniformLocation(_shaderProgram, "materialRoughness");
+        _materialAmbientOcclusionLocation = GL.GetUniformLocation(_shaderProgram, "materialAmbientOcclusion");
 
         GL.DetachShader(_shaderProgram, vertexShader);
         GL.DetachShader(_shaderProgram, fragmentShader);
@@ -174,16 +202,25 @@ public class Window : GameWindow
 
         float aspectRatio = ClientSize.Y == 0 ? 1.0f : ClientSize.X / (float)ClientSize.Y;
 
-        var view = ToOpenTkMatrix(_camera.GetViewMatrix());
-        var projection = ToOpenTkMatrix(_camera.GetProjectionMatrix(aspectRatio));
+        var numericsView = _camera.GetViewMatrix();
+        var numericsProjection = _camera.GetProjectionMatrix(aspectRatio);
+        var view = ToOpenTkMatrix(numericsView);
+        var projection = ToOpenTkMatrix(numericsProjection);
 
         GL.UniformMatrix4(_viewLocation, true, ref view);
         GL.UniformMatrix4(_projectionLocation, true, ref projection);
 
+        var cameraPosition = GetCameraWorldPosition(numericsView);
+        GL.Uniform3(_cameraPositionLocation, cameraPosition.X, cameraPosition.Y, cameraPosition.Z);
+
         GL.Uniform3(_lightDirectionLocation, -0.4f, -1.0f, -0.6f);
         GL.Uniform3(_lightColorLocation, 1.0f, 0.96f, 0.88f);
-        GL.Uniform1(_ambientStrengthLocation, 0.35f);
-        GL.Uniform1(_diffuseMapLocation, 0);
+        GL.Uniform1(_ambientStrengthLocation, 0.25f);
+
+        GL.Uniform1(_baseColorMapLocation, 0);
+        GL.Uniform1(_metallicMapLocation, 1);
+        GL.Uniform1(_roughnessMapLocation, 2);
+        GL.Uniform1(_ambientOcclusionMapLocation, 3);
 
         SyncSceneObjects(_current_scene.Objects);
 
@@ -204,12 +241,25 @@ public class Window : GameWindow
             var model = ToOpenTkMatrix(item.Transform.ToModelMatrix());
             GL.UniformMatrix4(_modelLocation, true, ref model);
 
-            var baseColor = item.Material.BaseColor;
+            var material = item.Material;
+            var baseColor = material.BaseColor;
+
             GL.Uniform1(_selectedLocation, item.Selected ? 1 : 0);
 
-            bool textureBound = TryBindTexture(item.Material.TexturePath);
-            GL.Uniform1(_useTextureLocation, textureBound ? 1 : 0);
-            GL.Uniform2(_textureScaleLocation, item.Material.TextureScale.X, item.Material.TextureScale.Y);
+            bool baseColorBound = TryBindTexture(material.BaseColorTexturePath, TextureUnit.Texture0);
+            bool metallicBound = TryBindTexture(material.MetallicTexturePath, TextureUnit.Texture1);
+            bool roughnessBound = TryBindTexture(material.RoughnessTexturePath, TextureUnit.Texture2);
+            bool aoBound = TryBindTexture(material.AmbientOcclusionTexturePath, TextureUnit.Texture3);
+
+            GL.Uniform1(_useBaseColorMapLocation, baseColorBound ? 1 : 0);
+            GL.Uniform1(_useMetallicMapLocation, metallicBound ? 1 : 0);
+            GL.Uniform1(_useRoughnessMapLocation, roughnessBound ? 1 : 0);
+            GL.Uniform1(_useAmbientOcclusionMapLocation, aoBound ? 1 : 0);
+
+            GL.Uniform2(_textureScaleLocation, material.TextureScale.X, material.TextureScale.Y);
+            GL.Uniform1(_materialMetallicLocation, material.Metallic);
+            GL.Uniform1(_materialRoughnessLocation, material.Roughness);
+            GL.Uniform1(_materialAmbientOcclusionLocation, material.AmbientOcclusion);
 
             GL.Uniform4(
                 _baseColorLocation,
@@ -219,7 +269,7 @@ public class Window : GameWindow
                 baseColor.W
             );
 
-            GL.Uniform1(_colorModeLocation, (int)item.Material.ColorMode);
+            GL.Uniform1(_colorModeLocation, (int)material.ColorMode);
             GL.DrawArrays(item.PrimitiveType, 0, item.Mesh.Vertex_Count);
         }
 
@@ -244,8 +294,10 @@ public class Window : GameWindow
         GL.DeleteProgram(_shaderProgram);
     }
 
-    private bool TryBindTexture(string? texturePath)
+    private bool TryBindTexture(string? texturePath, TextureUnit textureUnit)
     {
+        GL.ActiveTexture(textureUnit);
+
         if (string.IsNullOrWhiteSpace(texturePath))
         {
             GL.BindTexture(TextureTarget.Texture2D, 0);
@@ -263,9 +315,18 @@ public class Window : GameWindow
             _texturesByPath.Add(texturePath, texture);
         }
 
-        GL.ActiveTexture(TextureUnit.Texture0);
         GL.BindTexture(TextureTarget.Texture2D, texture);
         return true;
+    }
+
+    private static NumericsVector3 GetCameraWorldPosition(NumericsMatrix4x4 view)
+    {
+        if (!NumericsMatrix4x4.Invert(view, out var inverseView))
+        {
+            return NumericsVector3.Zero;
+        }
+
+        return new NumericsVector3(inverseView.M41, inverseView.M42, inverseView.M43);
     }
 
     private static Matrix4 ToOpenTkMatrix(NumericsMatrix4x4 m)
