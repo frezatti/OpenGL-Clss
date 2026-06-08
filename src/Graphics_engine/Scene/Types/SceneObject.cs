@@ -36,4 +36,6 @@ public sealed class SceneObject
     public bool Visible { get; set; } = true;
 
     public bool Selected { get; set; } = false;
+
+    public bool Selectable { get; set; } = true;
 }
