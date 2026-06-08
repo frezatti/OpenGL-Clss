@@ -20,10 +20,6 @@ public class ModelingScene : IScene
     private readonly List<SceneObject> _objects = new();
     private readonly Dictionary<ObjectId, SceneObject> _objectsById = new();
     public IReadOnlyList<SceneObject> Objects => _objects;
-    private const float EditorCommandCooldownSeconds = 0.25f;
-    private float _editorCommandCooldownRemaining;
-    private const float PrimitiveCreationCooldownSeconds = 0.25f;
-    private float _primitiveCreationCooldownRemaining;
 
     public ModelingScene()
     {
@@ -151,24 +147,6 @@ public class ModelingScene : IScene
         UpdateSelectedObjectTransform(context);
     }
 
-
-    private void UpdateEditorCommandCooldown(SceneContext context)
-    {
-        _editorCommandCooldownRemaining = MathF.Max(
-            0.0f,
-            _editorCommandCooldownRemaining - context.DeltaTime
-        );
-    }
-    private bool CanRunEditorCommand()
-    {
-        return _editorCommandCooldownRemaining <= 0.0f;
-    }
-
-    private void StartEditorCommandCooldown()
-    {
-        _editorCommandCooldownRemaining = EditorCommandCooldownSeconds;
-    }
-
     private bool HandleSelectionCommands(SceneContext context)
     {
         bool deleteDown = IsAnyKeyDown(context, Keys.Delete, Keys.X);
@@ -192,7 +170,7 @@ public class ModelingScene : IScene
 
     private bool HandlePrimitiveCreation(SceneContext context)
     {
-        bool cubeDown = IsAnyKeyDown(context, Keys.D1, Keys.KeyPad1, Keys.C);
+        bool cubeDown = IsAnyKeyDown(context, Keys.D1, Keys.KeyPad1);
 
         if (WasCommandPressed(cubeDown, ref _createCubeCommandWasDown))
         {
@@ -200,7 +178,7 @@ public class ModelingScene : IScene
             return true;
         }
 
-        bool pyramidDown = IsAnyKeyDown(context, Keys.D2, Keys.KeyPad2, Keys.P);
+        bool pyramidDown = IsAnyKeyDown(context, Keys.D2, Keys.KeyPad2);
 
         if (WasCommandPressed(pyramidDown, ref _createPyramidCommandWasDown))
         {
@@ -208,7 +186,7 @@ public class ModelingScene : IScene
             return true;
         }
 
-        bool cylinderDown = IsAnyKeyDown(context, Keys.D3, Keys.KeyPad3, Keys.Y);
+        bool cylinderDown = IsAnyKeyDown(context, Keys.D3, Keys.KeyPad3);
 
         if (WasCommandPressed(cylinderDown, ref _createCylinderCommandWasDown))
         {
@@ -216,7 +194,7 @@ public class ModelingScene : IScene
             return true;
         }
 
-        bool sphereDown = IsAnyKeyDown(context, Keys.D4, Keys.KeyPad4, Keys.O);
+        bool sphereDown = IsAnyKeyDown(context, Keys.D4, Keys.KeyPad4);
 
         if (WasCommandPressed(sphereDown, ref _createSphereCommandWasDown))
         {
@@ -224,7 +202,7 @@ public class ModelingScene : IScene
             return true;
         }
 
-        bool boxDown = IsAnyKeyDown(context, Keys.D5, Keys.KeyPad5, Keys.B);
+        bool boxDown = IsAnyKeyDown(context, Keys.D5, Keys.KeyPad5);
 
         if (WasCommandPressed(boxDown, ref _createBoxCommandWasDown))
         {
@@ -274,7 +252,7 @@ public class ModelingScene : IScene
                 new Vector4(0.85f, 0.35f, 1.0f, 1.0f)
             ),
 
-            ScenePrimitiveKind.Box => SceneObjectFactory.CreateCube(
+            ScenePrimitiveKind.Box => SceneObjectFactory.CreateBox(
                 $"Stretched Box {number}",
                 position,
                 new Vector3(1.6f, 0.65f, 0.8f),
@@ -287,7 +265,6 @@ public class ModelingScene : IScene
 
         var id = AddObject(obj);
         SelectObject(id);
-        _primitiveCreationCooldownRemaining = PrimitiveCreationCooldownSeconds;
     }
 
     private void UpdateSelectedObjectTransform(SceneContext context)
@@ -332,13 +309,13 @@ public class ModelingScene : IScene
             changed = true;
         }
 
-        if (context.KeyboardState.IsKeyDown(Keys.W) || context.KeyboardState.IsKeyDown(Keys.PageDown))
+        if (context.KeyboardState.IsKeyDown(Keys.W))
         {
             position.Z -= moveSpeed;
             changed = true;
         }
 
-        if (context.KeyboardState.IsKeyDown(Keys.S) || context.KeyboardState.IsKeyDown(Keys.PageUp))
+        if (context.KeyboardState.IsKeyDown(Keys.S))
         {
             position.Z += moveSpeed;
             changed = true;
@@ -406,21 +383,6 @@ public class ModelingScene : IScene
         obj.DirtyFlags |= ObjectDirtyFlags.Transform;
     }
 
-    private static bool WasKeyPressed(SceneContext context, Keys key)
-    {
-        return context.KeyboardState.IsKeyDown(key) &&
-               !context.PreviousKeyboardState.IsKeyDown(key);
-    }
-
-    private enum ScenePrimitiveKind
-    {
-        Cube,
-        Pyramid,
-        Cylinder,
-        Sphere,
-        Box
-    }
-
     private static bool IsAnyKeyDown(SceneContext context, params Keys[] keys)
     {
         foreach (var key in keys)
@@ -439,5 +401,14 @@ public class ModelingScene : IScene
         bool pressedThisFrame = isDownNow && !wasDownBefore;
         wasDownBefore = isDownNow;
         return pressedThisFrame;
+    }
+
+    private enum ScenePrimitiveKind
+    {
+        Cube,
+        Pyramid,
+        Cylinder,
+        Sphere,
+        Box
     }
 }

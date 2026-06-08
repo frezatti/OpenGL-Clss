@@ -7,14 +7,16 @@ namespace Graphics_engine.Scenes;
 public static class SceneObjectFactory
 {
     private static readonly string? CubeTexturePath = FindFirstExistingTexturePath(
-        "Assets/Textures/cube.png",
-        "Assets/Textures/square.png"
+        "Assets/Textures/metal.png",
+        "Assets/Textures/wood.png"
     );
 
+
     private static readonly string? SphereTexturePath = FindFirstExistingTexturePath(
-        "Assets/Textures/sphere.png",
-        "Assets/Textures/ball.png"
+        "Assets/Textures/wood.png",
+        "Assets/Textures/metal.png"
     );
+
 
     public static SceneObject CreateCube(
         string name,
