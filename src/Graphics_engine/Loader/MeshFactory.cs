@@ -13,6 +13,35 @@ public class MeshFactory
         points.Add(color.Z);
     }
 
+    private static void AddTriangle(List<float> points, Vector3 a, Vector3 b, Vector3 c, Vector3 color)
+    {
+        AddPoint(points, a.X, a.Y, a.Z, color);
+        AddPoint(points, b.X, b.Y, b.Z, color);
+        AddPoint(points, c.X, c.Y, c.Z, color);
+    }
+
+    private static void AddQuad(List<float> points, Vector3 a, Vector3 b, Vector3 c, Vector3 d, Vector3 color)
+    {
+        AddTriangle(points, a, b, c, color);
+        AddTriangle(points, a, c, d, color);
+    }
+
+    private static void ValidateMinimum(string parameterName, int value, int minimum)
+    {
+        if (value < minimum)
+        {
+            throw new ArgumentOutOfRangeException(parameterName, value, $"{parameterName} must be at least {minimum}.");
+        }
+    }
+
+    private static void ValidatePositive(string parameterName, float value)
+    {
+        if (value <= 0.0f)
+        {
+            throw new ArgumentOutOfRangeException(parameterName, value, $"{parameterName} must be greater than zero.");
+        }
+    }
+
     private static Mesh BuildMesh(List<float> points)
     {
         var mesh = new Mesh
@@ -66,6 +95,9 @@ public class MeshFactory
 
     public static Mesh CreateRegularPolygon(int segments, float r, float g, float b, float radius = 1.0f)
     {
+        ValidateMinimum(nameof(segments), segments, 3);
+        ValidatePositive(nameof(radius), radius);
+
         var points = new List<float>() { 0.0f, 0.0f, 0.0f, r, g, b };
         var color = new Vector3(r, g, b);
         var delta = (2 * MathF.PI) / segments;
@@ -85,6 +117,9 @@ public class MeshFactory
 
     public static Mesh CreateRegularPolygonOutLine(int segments, float r, float g, float b, float radius = 1.0f)
     {
+        ValidateMinimum(nameof(segments), segments, 3);
+        ValidatePositive(nameof(radius), radius);
+
         var points = new List<float>();
         var color = new Vector3(r, g, b);
         var delta = (2 * MathF.PI) / segments;
@@ -104,6 +139,9 @@ public class MeshFactory
 
     public static Mesh CreateRectangleBase(float width, float length)
     {
+        ValidatePositive(nameof(width), width);
+        ValidatePositive(nameof(length), length);
+
         var points = new List<float>();
         var color = new Vector3(1.0f, 1.0f, 1.0f);
 
@@ -120,6 +158,9 @@ public class MeshFactory
 
     public static Mesh CreateRectangleCenter(float width, float height)
     {
+        ValidatePositive(nameof(width), width);
+        ValidatePositive(nameof(height), height);
+
         var points = new List<float>();
         AddRectangle(
             points,
@@ -135,6 +176,15 @@ public class MeshFactory
 
     public static Mesh CreateTickMarks(float innerRadius, float outerRadius, float startAngle, float endAngle, int tickCount, Vector3? color)
     {
+        ValidatePositive(nameof(innerRadius), innerRadius);
+        ValidatePositive(nameof(outerRadius), outerRadius);
+        ValidateMinimum(nameof(tickCount), tickCount, 2);
+
+        if (outerRadius <= innerRadius)
+        {
+            throw new ArgumentOutOfRangeException(nameof(outerRadius), outerRadius, "outerRadius must be greater than innerRadius.");
+        }
+
         var points = new List<float>();
         var start = startAngle * MathF.PI / 180.0f;
         var end = endAngle * MathF.PI / 180.0f;
@@ -153,6 +203,9 @@ public class MeshFactory
 
     public static Mesh CreateNeedle(float width, float length, Vector3? color)
     {
+        ValidatePositive(nameof(width), width);
+        ValidatePositive(nameof(length), length);
+
         var points = new List<float>();
         var actualColor = color ?? new Vector3(1.0f, 0.0f, 0.0f);
 
@@ -165,6 +218,9 @@ public class MeshFactory
 
     public static Mesh CreateArc(float radius, float startAngle, float endAngle, int segments, Vector3? color)
     {
+        ValidatePositive(nameof(radius), radius);
+        ValidateMinimum(nameof(segments), segments, 1);
+
         var points = new List<float>();
         var actualColor = color ?? new Vector3(1.0f, 1.0f, 1.0f);
         var start = startAngle * MathF.PI / 180.0f;
@@ -216,57 +272,235 @@ public class MeshFactory
         return BuildMesh(grid);
     }
 
-    public static Mesh CreateCube(float size = 1.0f, Vector3? color = null)
+    public static Mesh CreatePlane(float width = 1.0f, float depth = 1.0f, Vector3? color = null)
     {
+        ValidatePositive(nameof(width), width);
+        ValidatePositive(nameof(depth), depth);
+
         var points = new List<float>();
         var c = color ?? new Vector3(0.8f, 0.8f, 0.8f);
-        float h = size / 2.0f;
+        float hx = width / 2.0f;
+        float hz = depth / 2.0f;
 
-        void AddTriangle(Vector3 a, Vector3 b, Vector3 d)
-        {
-            AddPoint(points, a.X, a.Y, a.Z, c);
-            AddPoint(points, b.X, b.Y, b.Z, c);
-            AddPoint(points, d.X, d.Y, d.Z, c);
-        }
+        var p00 = new Vector3(-hx, 0.0f, -hz);
+        var p01 = new Vector3(-hx, 0.0f, hz);
+        var p10 = new Vector3(hx, 0.0f, -hz);
+        var p11 = new Vector3(hx, 0.0f, hz);
 
-        var p000 = new Vector3(-h, -h, -h);
-        var p001 = new Vector3(-h, -h, h);
-        var p010 = new Vector3(-h, h, -h);
-        var p011 = new Vector3(-h, h, h);
-        var p100 = new Vector3(h, -h, -h);
-        var p101 = new Vector3(h, -h, h);
-        var p110 = new Vector3(h, h, -h);
-        var p111 = new Vector3(h, h, h);
+        AddTriangle(points, p00, p01, p11, c);
+        AddTriangle(points, p00, p11, p10, c);
+
+        return BuildMesh(points);
+    }
+
+    public static Mesh CreateCube(float size = 1.0f, Vector3? color = null)
+    {
+        return CreateBox(size, size, size, color);
+    }
+
+    public static Mesh CreateBox(float width = 1.0f, float height = 1.0f, float depth = 1.0f, Vector3? color = null)
+    {
+        ValidatePositive(nameof(width), width);
+        ValidatePositive(nameof(height), height);
+        ValidatePositive(nameof(depth), depth);
+
+        var points = new List<float>();
+        var c = color ?? new Vector3(0.8f, 0.8f, 0.8f);
+        float hx = width / 2.0f;
+        float hy = height / 2.0f;
+        float hz = depth / 2.0f;
+
+        var p000 = new Vector3(-hx, -hy, -hz);
+        var p001 = new Vector3(-hx, -hy, hz);
+        var p010 = new Vector3(-hx, hy, -hz);
+        var p011 = new Vector3(-hx, hy, hz);
+        var p100 = new Vector3(hx, -hy, -hz);
+        var p101 = new Vector3(hx, -hy, hz);
+        var p110 = new Vector3(hx, hy, -hz);
+        var p111 = new Vector3(hx, hy, hz);
 
         // Front (+Z)
-        AddTriangle(p001, p101, p111);
-        AddTriangle(p001, p111, p011);
+        AddTriangle(points, p001, p101, p111, c);
+        AddTriangle(points, p001, p111, p011, c);
 
         // Back (-Z)
-        AddTriangle(p100, p000, p010);
-        AddTriangle(p100, p010, p110);
+        AddTriangle(points, p100, p000, p010, c);
+        AddTriangle(points, p100, p010, p110, c);
 
         // Left (-X)
-        AddTriangle(p000, p001, p011);
-        AddTriangle(p000, p011, p010);
+        AddTriangle(points, p000, p001, p011, c);
+        AddTriangle(points, p000, p011, p010, c);
 
         // Right (+X)
-        AddTriangle(p101, p100, p110);
-        AddTriangle(p101, p110, p111);
+        AddTriangle(points, p101, p100, p110, c);
+        AddTriangle(points, p101, p110, p111, c);
 
         // Top (+Y)
-        AddTriangle(p010, p011, p111);
-        AddTriangle(p010, p111, p110);
+        AddTriangle(points, p010, p011, p111, c);
+        AddTriangle(points, p010, p111, p110, c);
 
         // Bottom (-Y)
-        AddTriangle(p000, p100, p101);
-        AddTriangle(p000, p101, p001);
+        AddTriangle(points, p000, p100, p101, c);
+        AddTriangle(points, p000, p101, p001, c);
+
+        return BuildMesh(points);
+    }
+
+    public static Mesh CreatePyramid(float baseSize = 1.0f, float height = 1.0f, Vector3? color = null)
+    {
+        ValidatePositive(nameof(baseSize), baseSize);
+        ValidatePositive(nameof(height), height);
+
+        var points = new List<float>();
+        var c = color ?? new Vector3(0.8f, 0.8f, 0.8f);
+        float h = baseSize / 2.0f;
+        float bottomY = -height / 2.0f;
+        float topY = height / 2.0f;
+
+        var p00 = new Vector3(-h, bottomY, -h);
+        var p01 = new Vector3(-h, bottomY, h);
+        var p10 = new Vector3(h, bottomY, -h);
+        var p11 = new Vector3(h, bottomY, h);
+        var apex = new Vector3(0.0f, topY, 0.0f);
+
+        // Base (-Y)
+        AddTriangle(points, p00, p10, p11, c);
+        AddTriangle(points, p00, p11, p01, c);
+
+        // Sides
+        AddTriangle(points, p01, p11, apex, c);
+        AddTriangle(points, p10, p00, apex, c);
+        AddTriangle(points, p00, p01, apex, c);
+        AddTriangle(points, p11, p10, apex, c);
+
+        return BuildMesh(points);
+    }
+
+    public static Mesh CreateCylinder(float radius = 0.5f, float height = 1.0f, int segments = 32, Vector3? color = null)
+    {
+        ValidatePositive(nameof(radius), radius);
+        ValidatePositive(nameof(height), height);
+        ValidateMinimum(nameof(segments), segments, 3);
+
+        var points = new List<float>();
+        var c = color ?? new Vector3(0.8f, 0.8f, 0.8f);
+        float halfHeight = height / 2.0f;
+        var topCenter = new Vector3(0.0f, halfHeight, 0.0f);
+        var bottomCenter = new Vector3(0.0f, -halfHeight, 0.0f);
+        float delta = (2.0f * MathF.PI) / segments;
+
+        for (int i = 0; i < segments; i++)
+        {
+            float angle0 = i * delta;
+            float angle1 = (i + 1) * delta;
+
+            var bottom0 = new Vector3(radius * MathF.Cos(angle0), -halfHeight, radius * MathF.Sin(angle0));
+            var bottom1 = new Vector3(radius * MathF.Cos(angle1), -halfHeight, radius * MathF.Sin(angle1));
+            var top0 = new Vector3(bottom0.X, halfHeight, bottom0.Z);
+            var top1 = new Vector3(bottom1.X, halfHeight, bottom1.Z);
+
+            // Side wall
+            AddTriangle(points, bottom0, top0, top1, c);
+            AddTriangle(points, bottom0, top1, bottom1, c);
+
+            // Caps
+            AddTriangle(points, topCenter, top1, top0, c);
+            AddTriangle(points, bottomCenter, bottom0, bottom1, c);
+        }
+
+        return BuildMesh(points);
+    }
+
+    public static Mesh CreateCone(float radius = 0.5f, float height = 1.0f, int segments = 32, Vector3? color = null)
+    {
+        ValidatePositive(nameof(radius), radius);
+        ValidatePositive(nameof(height), height);
+        ValidateMinimum(nameof(segments), segments, 3);
+
+        var points = new List<float>();
+        var c = color ?? new Vector3(0.8f, 0.8f, 0.8f);
+        float halfHeight = height / 2.0f;
+        var apex = new Vector3(0.0f, halfHeight, 0.0f);
+        var bottomCenter = new Vector3(0.0f, -halfHeight, 0.0f);
+        float delta = (2.0f * MathF.PI) / segments;
+
+        for (int i = 0; i < segments; i++)
+        {
+            float angle0 = i * delta;
+            float angle1 = (i + 1) * delta;
+
+            var bottom0 = new Vector3(radius * MathF.Cos(angle0), -halfHeight, radius * MathF.Sin(angle0));
+            var bottom1 = new Vector3(radius * MathF.Cos(angle1), -halfHeight, radius * MathF.Sin(angle1));
+
+            // Side
+            AddTriangle(points, bottom0, apex, bottom1, c);
+
+            // Bottom cap
+            AddTriangle(points, bottomCenter, bottom0, bottom1, c);
+        }
+
+        return BuildMesh(points);
+    }
+
+    public static Mesh CreateUVSphere(float radius = 0.5f, int sectors = 32, int stacks = 16, Vector3? color = null)
+    {
+        ValidatePositive(nameof(radius), radius);
+        ValidateMinimum(nameof(sectors), sectors, 3);
+        ValidateMinimum(nameof(stacks), stacks, 2);
+
+        var points = new List<float>();
+        var c = color ?? new Vector3(0.8f, 0.8f, 0.8f);
+        float stackStep = MathF.PI / stacks;
+        float sectorStep = (2.0f * MathF.PI) / sectors;
+
+        Vector3 GetPoint(int stack, int sector)
+        {
+            float phi = -MathF.PI / 2.0f + stack * stackStep;
+            float theta = sector * sectorStep;
+            float ringRadius = radius * MathF.Cos(phi);
+
+            return new Vector3(
+                ringRadius * MathF.Cos(theta),
+                radius * MathF.Sin(phi),
+                ringRadius * MathF.Sin(theta)
+            );
+        }
+
+        for (int stack = 0; stack < stacks; stack++)
+        {
+            for (int sector = 0; sector < sectors; sector++)
+            {
+                var p00 = GetPoint(stack, sector);
+                var p01 = GetPoint(stack, sector + 1);
+                var p10 = GetPoint(stack + 1, sector);
+                var p11 = GetPoint(stack + 1, sector + 1);
+
+                if (stack != 0)
+                {
+                    AddTriangle(points, p00, p10, p11, c);
+                }
+
+                if (stack != stacks - 1)
+                {
+                    AddTriangle(points, p00, p11, p01, c);
+                }
+            }
+        }
 
         return BuildMesh(points);
     }
 
     public static Mesh CreateSevenSegmentNumber(string text, float digitWidth = 0.18f, float digitHeight = 0.32f, float thickness = 0.035f, float spacing = 0.04f, Vector3? color = null)
     {
+        ValidatePositive(nameof(digitWidth), digitWidth);
+        ValidatePositive(nameof(digitHeight), digitHeight);
+        ValidatePositive(nameof(thickness), thickness);
+
+        if (spacing < 0.0f)
+        {
+            throw new ArgumentOutOfRangeException(nameof(spacing), spacing, "spacing cannot be negative.");
+        }
+
         var points = new List<float>();
         var actualColor = color ?? new Vector3(1.0f, 1.0f, 1.0f);
 
