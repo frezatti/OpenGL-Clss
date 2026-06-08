@@ -148,8 +148,8 @@ public class Window : GameWindow
         var view = ToOpenTkMatrix(_camera.GetViewMatrix());
         var projection = ToOpenTkMatrix(_camera.GetProjectionMatrix(aspectRatio));
 
-        GL.UniformMatrix4(_viewLocation, false, ref view);
-        GL.UniformMatrix4(_projectionLocation, false, ref projection);
+        GL.UniformMatrix4(_viewLocation, true, ref view);
+        GL.UniformMatrix4(_projectionLocation, true, ref projection);
 
         SyncSceneObjects(_current_scene.Objects);
 
@@ -168,7 +168,7 @@ public class Window : GameWindow
             GL.BindVertexArray(gpumesh.VAO);
 
             var model = ToOpenTkMatrix(item.Transform.ToModelMatrix());
-            GL.UniformMatrix4(_modelLocation, false, ref model);
+            GL.UniformMatrix4(_modelLocation, true, ref model);
 
 
             var baseColor = item.Material.BaseColor;
