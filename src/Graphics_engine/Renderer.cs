@@ -120,6 +120,8 @@ public class Window : GameWindow
             Close();
         }
 
+        float aspectRatio = ClientSize.Y == 0 ? 1.0f : ClientSize.X / (float)ClientSize.Y;
+
         var context = new SceneContext()
         {
             DeltaTime = (float)args.Time,
@@ -129,6 +131,8 @@ public class Window : GameWindow
             PreviousKeyboardState = _previousKeyboardState,
             ClientWidth = ClientSize.X,
             ClientHeight = ClientSize.Y,
+            ViewMatrix = _camera.GetViewMatrix(),
+            ProjectionMatrix = _camera.GetProjectionMatrix(aspectRatio),
         };
 
         _current_scene.Update(context);
